@@ -1,0 +1,50 @@
+//------------------------------------------Access Control Module--------------------------------------------------
+
+alias funcNum R1;
+
+//------------Acquire Kernel Lock(final)----------------
+if(funcNum == ACQUIRE_KERN_LOCK) then
+	if(CORE == 1) then
+		if(([SYSTEM_STATUS_TABLE + 5] != 0) || ([SYSTEM_STATUS_TABLE + 7] == 1)) then
+			//if secondary core and paging or logout_status is on eXpOS don't permit a process to execute critical code
+			[PROCESS_TABLE + (16 * [SYSTEM_STATUS_TABLE + 1]) + 4] = RUNNING;
+			backup;
+			call MOD_5;
+			restore;
+		endif;
+	endif;
+
+	while(tsl(KERN_LOCK) == 1) do
+		continue;
+	endwhile;
+	return;
+endif;
+//------------------------------------------------------
+
+//----------Acquire Scheduler Lock(final)---------------
+if(funcNum == ACQUIRE_SCHED_LOCK) then
+	while(tsl(SCHED_LOCK) == 1) do
+		continue;
+	endwhile;
+	return;
+endif;
+//------------------------------------------------------
+
+//--------------Acquire GLOCK(final)--------------------
+if(funcNum == ACQUIRE_GLOCK) then
+	while(tsl(GLOCK) == 1) do
+		continue;
+	endwhile;
+	return;
+endif;
+//------------------------------------------------------
+
+//----------------Release Lock(final)-------------------
+if(funcNum == RELEASE_LOCK) then
+	alias LockVarAddr R2;
+	[LockVarAddr] = 0;
+	return;
+endif;
+//------------------------------------------------------
+
+//-----------------------------------------------------------------------------------------------------------------

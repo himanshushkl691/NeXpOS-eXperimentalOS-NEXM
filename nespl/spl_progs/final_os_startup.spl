@@ -1,0 +1,160 @@
+//----------------------------------------Primary OS Startup Module-----------------------------------
+
+//load MOD_5
+loadi(50,63);
+loadi(51,64);
+
+//load MOD_7
+loadi(54,67);
+loadi(55,68);
+
+//load idle process
+loadi(69,11);
+
+SP = 38911;
+call BOOT_MODULE;
+
+//--------------------IDLE Process------------------------
+PTBR = PAGE_TABLE_BASE;
+PTLR = 10;
+
+alias i R0;
+i = 0;
+while(i < 20) do
+	[PTBR + i] = -1;
+	[PTBR + i + 1] = "0000";
+	i = i + 2;
+endwhile;
+
+//library
+[PTBR + 0] = 63;
+[PTBR + 1] = "0100";
+[PTBR + 2] = 64;
+[PTBR + 3] = "0100";
+
+//code
+[PTBR + 8] = 69;
+[PTBR + 9] = "0100";
+
+//stack
+[PTBR + 16] = 70;
+[PTBR + 17] = "0110";
+
+//tick
+[PROCESS_TABLE] = 0;
+//pid
+[PROCESS_TABLE + 1] = 0;
+//userid
+[PROCESS_TABLE + 3] = 0;
+//state
+[PROCESS_TABLE + 4] = RUNNING;
+//user area page number
+[PROCESS_TABLE + 11] = 76;
+//kernel stack pointer
+[PROCESS_TABLE + 12] = 0;
+//user stack pointer
+[PROCESS_TABLE + 13] = 4096;
+//ptbr
+[PROCESS_TABLE + 14] = PAGE_TABLE_BASE;
+//ptlr
+[PROCESS_TABLE + 15] = 10;
+[35840] = [35329];
+//--------------------------------------------------------
+
+//-----------------------Swapper Daemon-------------------
+PTBR = PAGE_TABLE_BASE + 300;
+
+i = 0;
+while(i < 20) do
+	[PTBR + i] = -1;
+	[PTBR + i + 1] = "0000";
+	i = i + 2;
+endwhile;
+
+//code
+[PTBR + 8] = 69;	//share code page of idle process
+[PTBR + 9] = "0100";
+
+//stack
+[PTBR + 16] = 81;
+[PTBR + 17] = "0110";
+
+//set PROCESS_TABLE details
+//tick
+[PROCESS_TABLE + 240] = 0;
+//pid
+[PROCESS_TABLE + 241] = 15;
+//userid
+[PROCESS_TABLE + 243] = 0;
+//state
+[PROCESS_TABLE + 244] = CREATED;
+//user area page number
+[PROCESS_TABLE + 251] = 82;
+//kernel stack pointer
+[PROCESS_TABLE + 252] = 0;
+//user stack pointer
+[PROCESS_TABLE + 253] = 4096;
+//ptbr
+[PROCESS_TABLE + 254] = PTBR;
+//ptlr
+[PROCESS_TABLE + 255] = 10;
+[41472] = [35329];
+//--------------------------------------------------------
+
+//-----------------------IDLE2----------------------------
+PTBR = PAGE_TABLE_BASE + 280;
+
+//invalidate all entry
+i = 0;
+while(i < 20) do
+	[PTBR + i] = -1;
+	[PTBR + i + 1] = "0000";
+	i = i + 2;
+endwhile;
+
+//code page
+[PTBR + 8] = 69;
+[PTBR + 9] = "0100";
+
+//stack page
+[PTBR + 16] = 83;
+[PTBR + 17] = "0110";
+
+//initialize process_table for IDLE2
+i = 224;
+//tick
+[PROCESS_TABLE + i] = 0;
+//userid
+[PROCESS_TABLE + i + 3] = 0;
+//pid
+[PROCESS_TABLE + i + 1] = 14;
+//state
+[PROCESS_TABLE + i + 4] = RUNNING;
+//user area page number
+[PROCESS_TABLE + i + 11] = 84;
+//kptr
+[PROCESS_TABLE + i + 12] = 0;
+//uptr
+[PROCESS_TABLE + i + 13] = 4096;
+//ptbr
+[PROCESS_TABLE + i + 14] = PTBR;
+//ptlr
+[PROCESS_TABLE + i + 15] = 10;
+//current_pid2 in system_status_table must be set to pid of IDLE2
+[SYSTEM_STATUS_TABLE + 6] = 14;
+//logout_status field in system_status_table must be set to 0 initially
+[SYSTEM_STATUS_TABLE + 7] = 0;
+//kern_lock and sched_lock field is set to 0 in access_lock_table
+[ACCESS_LOCK_TABLE] = 0;
+[ACCESS_LOCK_TABLE + 1] = 0;
+start;
+
+//--------------------------------------------------------
+
+//first process in user mode -> idle
+[SYSTEM_STATUS_TABLE + 1] = 0;
+PTBR = PAGE_TABLE_BASE;
+PTLR = 10;
+SP = 4096;
+
+ireturn;

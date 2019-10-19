@@ -1,0 +1,193 @@
+//---------------------------------------PROCESS MANAGER MODULE----------------------------------------
+alias funcNum R1;
+alias currPID R2;
+
+//-------------Kill All(5)(final)-----------------
+if(funcNum == KILL_ALL) then
+	alias i R3;
+
+	//lock all files to ensure no processes are in middle of a file operation
+	i = 0;
+	while(i < MAX_FILE_NUM) do
+		if([INODE_TABLE + (16 * i) + 1] != -1) then
+			//acquire_inode() in resource manager
+			backup;
+			R1 = ACQUIRE_INODE;
+			R2 = currPID;
+			R3 = i;
+			call MOD_0;
+			restore;
+		endif;
+		i = i + 1;
+	endwhile;
+
+	//exit_process() for (i != currpid) and init and idle
+	i = 2;
+	while(i < MAX_PROC_NUM) do
+		if(([PROCESS_TABLE + (i * 16) + 4] != TERMINATED) && (i != currPID)) then
+			backup;
+			R1 = EXIT_PROCESS;
+			R2 = i;
+			call MOD_1;
+			restore;
+		endif;
+		i = i + 1;
+	endwhile;
+
+	//release all files acquired earlier
+	i = 0;
+	while(i < MAX_FILE_NUM) do
+		if([INODE_TABLE + (16 * i) + 1] != -1) then
+			//release_inode() in resource manager
+			backup;
+			R1 = RELEASE_INODE;
+			R2 = currPID;
+			R3 = i;
+			call MOD_0;
+			restore;
+		endif;
+		i = i + 1;
+	endwhile;
+	return;
+endif;
+//------------------------------------------------
+
+//-----------Free User Area Page(final)-----------
+if(funcNum == FREE_USER_AREA_PAGE) then
+	alias userAreaPageNum R3;
+	alias i R4;
+	userAreaPageNum = [PROCESS_TABLE + (currPID * 16) + 11];
+	
+	//for every valid semaphore entry invoke release_semaphore()
+	i = 0;
+	while(i < 8) do
+		if([userAreaPageNum * 512 + i + 496] == SEMAPHORE) then
+			backup;
+			R1 = RELEASE_SEMAPHORE;
+			R2 = currPID;					
+			R3 = [userAreaPageNum * 512 + 496 + i + 1];	//semid
+			call MOD_0;
+			restore;
+		endif;
+		if([userAreaPageNum * 512 + i + 496] == FILE) then
+			backup;
+			R1 = CLOSE;
+			R2 = [userAreaPageNum * 512 + 496 + i + 1];	//open_file_table_index
+			call MOD_3; 
+			restore;
+		endif;
+		i = i + 2;
+	endwhile;
+
+	backup;
+	R1 = RELEASE_PAGE;
+	R2 = userAreaPageNum;
+
+	//call memory manager
+	call MOD_2; 
+
+	restore;
+	return;
+endif;
+//------------------------------------------------
+
+//-------------Exit Process(final)----------------
+if(funcNum == EXIT_PROCESS) then
+	//if exit_process() is not called from exec()
+	if([PROCESS_TABLE + (currPID * 16) + 9] != 9)	then
+		alias i R3;
+		i = 0;
+		while(i < 16) do
+			//wake up all process waiting for current process to exit
+			if(([PROCESS_TABLE+(i*16)+4] == WAIT_PROCESS) && ([PROCESS_TABLE + (i*16) + 5] == currPID)) then
+				[PROCESS_TABLE + (i * 16) + 4] = READY;
+			endif;
+			//make children of current process orphan
+			if([PROCESS_TABLE + (i * 16) + 2] == currPID) then
+				[PROCESS_TABLE + (i * 16) + 2] = -1;
+			endif;
+			i = i + 1;
+		endwhile;
+	endif;
+
+	//deallocate page table entries
+	backup;
+	R1 = FREE_PAGE_TABLE;
+	R2 = currPID;
+	call MOD_1;
+	restore;
+
+	//free user area page
+	backup;
+	R1 = FREE_USER_AREA_PAGE;
+	R2 = currPID;
+	call MOD_1;
+	restore;
+
+	//set state to TERMINATED
+	[PROCESS_TABLE + (currPID * 16) + 4] = TERMINATED;
+	return;
+endif;
+//------------------------------------------------
+
+//------------Free Page Table(final)--------------
+if(funcNum == FREE_PAGE_TABLE) then
+	alias temp R4;
+	alias disk_entry R5;
+	PTBR = PAGE_TABLE_BASE + currPID * 20;
+	[PTBR + 0] = -1;
+	[PTBR + 1] = "0000";
+	[PTBR + 2] = -1;
+	[PTBR + 3] = "0000";
+	disk_entry = (currPID * 10) + DISK_MAP_TABLE;
+	temp = 0;
+	while(temp < 10) do
+		if(([disk_entry + temp] != -1) && (temp == 2 || temp == 3 || temp == 8 || temp == 9)) then
+			backup;
+			R1 = RELEASE_BLOCK;
+			R2 = [disk_entry + temp];	//block number
+			call MOD_2;			//memory manager
+			restore;
+		endif;
+		[disk_entry + temp] = -1;
+		temp = temp + 1;
+	endwhile;
+	temp = 4;
+	while(temp < 20) do
+		if([PTBR + temp] != -1) then
+			backup;
+			R1 = RELEASE_PAGE;
+			R2 = [PTBR + temp];
+			call MOD_2;
+			restore;
+			[PTBR + temp] = -1;
+			[PTBR + temp + 1] = "0000";
+		endif;
+		temp = temp + 2;
+	endwhile;
+	return;
+endif;
+//------------------------------------------------
+
+//--------------Get PCB Entry(final)--------------
+if(funcNum == GET_PCB_ENTRY) then
+	alias i R3;
+	i = 0;
+	while(i < 16) do
+		if([PROCESS_TABLE + (i * 16) + 4] == TERMINATED) then
+			R0 = i;		//pid of new process
+			[PROCESS_TABLE + (i * 16) + 1] = i;
+			[PROCESS_TABLE + (i * 16) + 4] = ALLOCATED;
+			[PROCESS_TABLE + (i * 16) + 14] = PAGE_TABLE_BASE + (20 * i);
+			[PROCESS_TABLE + (i * 16) + 15] = 10;
+			return;
+		endif;
+		i = i + 1;
+	endwhile;
+	R0 = -1;	//if index is not found
+	return;
+endif;
+//------------------------------------------------
+
+return;
+//-----------------------------------------------------------------------------------------------------

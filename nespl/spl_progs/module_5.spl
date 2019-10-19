@@ -1,0 +1,98 @@
+//-----------------------------------ROUND ROBIN SCHEDULER------------------------------------
+
+//acquire_sched_lock() in access lock manager
+backup;
+R1 = ACQUIRE_SCHED_LOCK;
+call MOD_8;
+restore;
+alias current_pid R0;
+alias process_table_entry R1;
+alias newPID R2;
+alias tempPID R3;
+
+multipush(BP);
+
+current_pid = [SYSTEM_STATUS_TABLE + 1];
+process_table_entry = PROCESS_TABLE+(current_pid*16);
+
+//save context of current process
+[process_table_entry + 12] = SP % 512;	//kernel stack pointer
+[process_table_entry + 14] = PTBR;	//save PTBR
+[process_table_entry + 15] = PTLR;	//save PTLR
+
+//--------------------Select new process-----------------------
+
+newPID = 0;	//by default idle
+tempPID = current_pid+1;
+
+if(CORE == 0) then
+	//PRIMARY CORE IS RUNNING SCHEDULER
+	if([SYSTEM_STATUS_TABLE + 5] != 0) then
+		//paging on
+		alias swapperPT R4;
+		swapperPT = PROCESS_TABLE + (15 * 16);
+		if(([swapperPT + 4] != READY) && ([swapperPT + 4] != RUNNING) && ([swapperPT + 4] != CREATED)) then
+			newPID = 0;
+		else
+			newPID = 15;
+		endif;
+	else
+		if(([SYSTEM_STATUS_TABLE + 7] == 1) && ([SYSTEM_STATUS_TABLE + 6] != 14)) then
+			//if logout_status is set and secondary core is not running IDLE2 schedule IDLE on
+			newPID = 0;
+		else
+			//paging off select non swapped process excluding (swapper daemon, IDLE2 and all process running core2)
+			while(tempPID < 14) do
+				alias temp R4;
+				temp = PROCESS_TABLE + (tempPID * 16);
+				if(((([temp + 4] == READY) || ([temp + 4] == CREATED)) && ([temp + 6] == 0)) && (tempPID != [SYSTEM_STATUS_TABLE+6])) then
+					newPID=tempPID;
+					break;
+				endif;
+				tempPID = tempPID + 1;
+			endwhile;
+		endif;
+	endif;
+else
+	//SECONDARY CORE IS RUNNING SCHEDULER
+endif;
+
+//-------------------------------------------------------------
+
+//---------------Change context to newly found process---------
+alias newPT R4;
+newPT = PROCESS_TABLE + (newPID * 16);
+//kernel stack of restored process
+SP = [newPT + 11] * 512 + [newPT + 12];
+PTBR = [newPT + 14];
+PTLR = [newPT + 15];
+[SYSTEM_STATUS_TABLE + (5 * CORE) + 1] = newPID;
+//--------------------------------------------------------------
+
+if([newPT + 4] == CREATED) then
+	//assign BP of new process as first word from its kernel stack
+	BP = [[newPT + 11] * 512];
+	SP = [newPT + 13];
+	[newPT + 4] = RUNNING;
+	[newPT + 9] = 0;
+	//release_lock() in access lock manager
+	backup;
+	R1 = RELEASE_LOCK;
+	R2 = SCHED_LOCK;
+	call MOD_8;
+	restore;
+	ireturn;
+endif;
+
+[newPT + 4] = RUNNING;
+multipop(BP);
+
+//release_lock() in access lock manager
+backup;
+R1 = RELEASE_LOCK;
+R2 = SCHED_LOCK;
+call MOD_8;
+restore;
+
+return;
+//-------------------------------------------------------------------------------------------

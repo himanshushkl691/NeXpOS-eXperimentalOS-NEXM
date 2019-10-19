@@ -1,0 +1,316 @@
+//--------------------------------------Boot Module-----------------------------------------
+//load library
+loadi(63,13);
+loadi(64,14);
+
+//load INIT program
+loadi(65,7);
+
+//load shell program
+loadi(67,9);
+loadi(68,10);
+
+//load INT_4 module
+loadi(10,23);
+loadi(11,24);
+
+//load INT_5 module
+loadi(12,25);
+loadi(13,26);
+
+//load INT_6 module
+loadi(14,27);
+loadi(15,28);
+
+//load INT_7 module
+loadi(16,29);
+loadi(17,30);
+
+//load INT 8 module
+loadi(18,31);
+loadi(19,32);
+
+//load INT_9 module
+loadi(20,33);
+loadi(21,34);
+
+//load INT_10 module
+loadi(22,35);
+loadi(23,36);
+
+//load INT_11 module
+loadi(24,37);
+loadi(25,38);
+
+//load INT_12 module
+loadi(26,39);
+loadi(27,40);
+
+//load INT_13 module
+loadi(28,41);
+loadi(29,42);
+
+//load INT_14 module
+loadi(30,43);
+loadi(31,44);
+
+//load INT_15 module
+loadi(32,45);
+loadi(33,46);
+
+//load INT_16 module
+loadi(34,47);
+loadi(35,48);
+
+//load INT_17 module
+loadi(36,49);
+loadi(37,50);
+
+//load MOD_0
+loadi(40,53);
+loadi(41,54);
+
+//load MOD_1
+loadi(42,55);
+loadi(43,56);
+
+//load MOD_2
+loadi(44,57);
+loadi(45,58);
+
+//load MOD_3
+loadi(46,59);
+loadi(47,60);
+
+//load MOD_4
+loadi(48,61);
+loadi(49,62);
+
+//load MOD_6
+loadi(52,65);
+loadi(53,66);
+
+//load timer interrupt
+loadi(4,17);
+loadi(5,18);
+
+//load exception handler
+loadi(2,15);
+loadi(3,16);
+
+//load console interrupt
+loadi(8,21);
+loadi(9,22);
+
+//load disk interrupt
+loadi(6,19);
+loadi(7,20);
+
+//load inode table
+loadi(59,3);
+loadi(60,4);
+
+//load root file
+loadi(62,5);
+
+//load disk free list
+loadi(61,2);
+
+alias i R0;
+alias cnt R1;
+
+//initialize state of {0..16}/{0,1,2} entries
+i = 0;
+while(i < 16) do
+	alias temp R2;
+	temp = PROCESS_TABLE + (i * 16);
+	[temp] = 0;
+	[temp + 6] = 0;
+	[temp + 4] = TERMINATED;
+	i = i + 1;
+endwhile;
+
+//initialize memory free list
+i = 0;
+cnt = 0;
+while(i < 128) do
+	if(i < 83) then
+		[MEMORY_FREE_LIST + i] = 1;
+	else
+		[MEMORY_FREE_LIST + i] = 0;
+		cnt = cnt + 1;
+	endif;
+	i = i + 1;
+endwhile;
+
+//initialize semaphore table by setting process_count to 0 and locking_pid to -1
+alias semaphore_table R2;
+i = 0;
+while(i < MAX_SEM_COUNT) do
+	semaphore_table = SEMAPHORE_TABLE + (i * 4);
+	[semaphore_table] = -1;		//locking pid
+	[semaphore_table + 1] = 0;	//process count
+	i = i + 1;
+endwhile;
+
+//initialize file status table by setting lock pid and file open count to -1
+alias file_status_table R2;
+i = 0;
+while(i < MAX_FILE_NUM) do
+	file_status_table = FILE_STATUS_TABLE + (4 * i);
+	[file_status_table] = -1;
+	[file_status_table + 1] = -1;
+	i = i + 1;
+endwhile;
+
+//initialize buffer table by setting block number and locking pid to -1 and dirty bit to 0
+alias buffer_table R2;
+i = 0;
+while(i < MAX_BUFFER) do
+	buffer_table = BUFFER_TABLE + (4 * i);
+	[buffer_table] = -1;		//block number
+	[buffer_table + 1] = 0;		//dirty bit
+	[buffer_table + 2] = -1;	//locking pid
+	[buffer_table + 3] = -1;	//unused
+	i = i + 1;
+endwhile;
+
+//initialize open_file_table by setting inode_indices to -1 and open_instance_count to 0
+alias open_file_table R2;
+i = 0;
+while(i < MAX_OPENFILE_NUM) do
+	open_file_table = OPEN_FILE_TABLE + (4 * i);
+	[open_file_table] = -1;		//inode index
+	[open_file_table + 1] = 0;	//open instance count
+	i = i + 1;
+endwhile;
+
+//mem_free_count
+[SYSTEM_STATUS_TABLE + 2] = cnt;
+
+//initially terminal is free
+[TERMINAL_STATUS_TABLE]=0;
+
+//reset WAIT_MEM_COUNT
+[SYSTEM_STATUS_TABLE + 3] = 0;
+
+//init SWAPPED_COUNT and PAGING_STATUS to 0
+[SYSTEM_STATUS_TABLE + 4] = 0;
+[SYSTEM_STATUS_TABLE + 5] = 0;
+
+//disk is not busy
+[DISK_STATUS_TABLE] = 0;
+
+//-----------------INIT/Login Program---------------------
+PTBR = PAGE_TABLE_BASE;
+PTLR = 10;
+
+i = PAGE_TABLE_BASE + 20;
+alias j R3;
+j = 0;
+while(j < 20) do
+	[i + j] = -1;
+	[i + j + 1] = "0000";
+	j = j + 2;
+endwhile;
+
+//library
+[i + 0] = 63;
+[i + 1] = "0100";
+[i + 2] = 64;
+[i + 3] = "0100";
+
+//code
+[i + 8] = 65;
+[i + 9] = "0100";
+
+//stack
+[i + 16] = 66;
+[i + 17] = "0110";
+
+i = PROCESS_TABLE + 16;
+//pid
+[i + 1] = 1;
+//userid
+[i + 3] = 0;
+//status
+[i + 4] = CREATED;
+//user area page number
+[i + 11] = 77;
+//user stack pointer
+[i + 13] = 8*512;
+//kernel stack pointer
+[i + 12] = 0;
+//ptbr
+[i + 14] = (PAGE_TABLE_BASE + 20);
+//ptlr
+[i + 15] = 10;
+[66 * 512] = [65 * 512 + 1];
+
+//initialize per-process table for init
+i = 496;
+while(i <= 511) do
+	[77 * 512 + i] = -1;
+	i = i + 2;
+endwhile;
+
+//---------------------Shell Program--------------------------
+PTBR = PAGE_TABLE_BASE;
+PTLR = 10;
+
+i = PAGE_TABLE_BASE + 40;
+j = 0;
+while(j < 20) do
+	[i + j] = -1;
+	[i + j + 1] = "0000";
+	j = j + 2;
+endwhile;
+
+//library
+[i + 0] = 63;
+[i + 1] = "0100";
+[i + 2] = 64;
+[i + 3] = "0100";
+
+//code
+[i + 8] = 67;
+[i + 9] = "0100";
+[i + 10] = 68;
+[i + 11] = "0100";
+
+//stack
+[i + 16] = 78;
+[i + 17] = "0110";
+[i + 18] = 79;
+[i + 19] = "0110";
+
+i = PROCESS_TABLE + 32;
+//pid
+[i + 1] = 2;
+//ppid
+[i + 2] = 1;
+//status
+[i + 4] = TERMINATED;
+//user area page number
+[i + 11] = 80;
+//user stack pointer
+[i + 13] = 8*512;
+//kernel stack pointer
+[i + 12] = 0;
+//ptbr
+[i + 14] = (PAGE_TABLE_BASE + 40);
+//ptlr
+[i + 15] = 10;
+[78 * 512] = [67 * 512 + 1];
+
+//initialize disk-map table for shell
+i = 0;
+while(i < 10) do
+	[DISK_MAP_TABLE + 20 + i] = -1;
+	i = i + 1;
+endwhile;
+[DISK_MAP_TABLE + 24] = 67;
+[DISK_MAP_TABLE + 25] = 68;
+breakpoint;
+return;
+//------------------------------------------------------------------------------------------
