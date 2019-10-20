@@ -1,15 +1,19 @@
-//-----------------------INTERRUPT 9 MODULE---------------------
+//--------------------------------------------INTERRUPT 9 MODULE--------------------------------------------------
 
-//-------EXEC SYSTEM CALL(9)--------
+backup;
+R1 = ACQUIRE_KERN_LOCK;
+call MOD_8;
+restore;
 
+//------------------Exec System Call(9)--------------
 //switch to kernel stack of current process
 alias userSP R0;
 userSP = SP;
-[PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1] * 16) + 13] = SP;
-SP = [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1] * 16) + 11] * 512 - 1;
+[PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + (5 * CORE) + 1] * 16) + 13] = SP;
+SP = [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + (5 * CORE) + 1] * 16) + 11] * 512 - 1;
 
 //change mode_flag in current_proc's process_table
-[PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1] * 16) + 9] = 9;
+[PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + (5 * CORE) + 1] * 16) + 9] = 9;
 
 alias physical_page_number R1;
 alias offset R2;
@@ -35,14 +39,19 @@ endwhile;
 if(idx < 0) then
 	SP = userSP;
 	//set mode_flag
-	[PROCESS_TABLE+([SYSTEM_STATUS_TABLE+1]*16)+9]=0;
+	[PROCESS_TABLE+([SYSTEM_STATUS_TABLE+(5*CORE)+1]*16)+9]=0;
 	//set ret_val
 	[[PTBR+2*((userSP - 1)/512)]*512 + ((userSP - 1)%512)] = -1;
+	backup;
+	R1 = RELEASE_LOCK;
+	R2 = KERN_LOCK;
+	call MOD_8;
+	restore;
 	ireturn;
 endif;
 
 alias exitPID R6;
-exitPID = [SYSTEM_STATUS_TABLE+1];
+exitPID = [SYSTEM_STATUS_TABLE+(5*CORE)+1];
 
 //deallocate resources and pages of current process
 backup;
@@ -53,7 +62,7 @@ restore;
 
 alias user_area_page_number R7;
 //pid of current will be same as exitPID, pages has been deallocated
-user_area_page_number = [PROCESS_TABLE+([SYSTEM_STATUS_TABLE + 1]*16)+11];
+user_area_page_number = [PROCESS_TABLE+([SYSTEM_STATUS_TABLE + (5 * CORE) + 1]*16)+11];
 
 //reclaim same page by incrementing memory_free_list entry of user_area_page
 [MEMORY_FREE_LIST+user_area_page_number]=[MEMORY_FREE_LIST+user_area_page_number]+1;
@@ -62,17 +71,17 @@ user_area_page_number = [PROCESS_TABLE+([SYSTEM_STATUS_TABLE + 1]*16)+11];
 [SYSTEM_STATUS_TABLE+2]=[SYSTEM_STATUS_TABLE+2]-1;
 
 //SP points to kernel_stack of new process
-SP = [PROCESS_TABLE+([SYSTEM_STATUS_TABLE + 1]*16)+11]*512 - 1;
+SP = [PROCESS_TABLE+([SYSTEM_STATUS_TABLE + (5 * CORE) + 1]*16)+11]*512 - 1;
 
 //set state of terminated process to RUNNING,new process uses same pid
-[PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1]*16) + 4] = RUNNING;
+[PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + (5 * CORE) + 1]*16) + 4] = RUNNING;
 
 //set inode_index
-[PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1]*16) + 7] = idx;
+[PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + (5 * CORE) + 1]*16) + 7] = idx;
 
 //----------PAGE TABLE SETUP-------------
 
-PTBR = PAGE_TABLE_BASE + [SYSTEM_STATUS_TABLE + 1] * 20;
+PTBR = PAGE_TABLE_BASE + [SYSTEM_STATUS_TABLE + (5 * CORE) + 1] * 20;
 //------validate library entries-
 [PTBR + 0] = 63;
 [PTBR + 1] = "0100";
@@ -117,49 +126,55 @@ backup;
 R1 = GET_CODE_PAGE;	//funcNumber
 R2 = [inode_pos + 8];	//block number
 call MOD_2;		//memory manager
-[PAGE_TABLE_BASE + ([SYSTEM_STATUS_TABLE + 1] * 20) + 8] = R0;
-[PAGE_TABLE_BASE + ([SYSTEM_STATUS_TABLE + 1] * 20) + 9] = "0100";
+[PAGE_TABLE_BASE + ([SYSTEM_STATUS_TABLE + (5 * CORE) + 1] * 20) + 8] = R0;
+[PAGE_TABLE_BASE + ([SYSTEM_STATUS_TABLE + (5 * CORE) + 1] * 20) + 9] = "0100";
 restore;
 endif;
 
 //invalidate rest of code pages
-[PAGE_TABLE_BASE + ([SYSTEM_STATUS_TABLE + 1] * 20) + 10] = -1;
-[PAGE_TABLE_BASE + ([SYSTEM_STATUS_TABLE + 1] * 20) + 11] = "0000";
-[PAGE_TABLE_BASE + ([SYSTEM_STATUS_TABLE + 1] * 20) + 12] = -1;
-[PAGE_TABLE_BASE + ([SYSTEM_STATUS_TABLE + 1] * 20) + 13] = "0000";
-[PAGE_TABLE_BASE + ([SYSTEM_STATUS_TABLE + 1] * 20) + 14] = -1;
-[PAGE_TABLE_BASE + ([SYSTEM_STATUS_TABLE + 1] * 20) + 15] = "0000";
-//-----------------------------
+[PAGE_TABLE_BASE + ([SYSTEM_STATUS_TABLE + (5 * CORE) + 1] * 20) + 10] = -1;
+[PAGE_TABLE_BASE + ([SYSTEM_STATUS_TABLE + (5 * CORE) + 1] * 20) + 11] = "0000";
+[PAGE_TABLE_BASE + ([SYSTEM_STATUS_TABLE + (5 * CORE) + 1] * 20) + 12] = -1;
+[PAGE_TABLE_BASE + ([SYSTEM_STATUS_TABLE + (5 * CORE) + 1] * 20) + 13] = "0000";
+[PAGE_TABLE_BASE + ([SYSTEM_STATUS_TABLE + (5 * CORE) + 1] * 20) + 14] = -1;
+[PAGE_TABLE_BASE + ([SYSTEM_STATUS_TABLE + (5 * CORE) + 1] * 20) + 15] = "0000";
+//------------------------------------
 
-//---initl per-process table---
+//-----initl per-process table--------
 alias off R9;
 off = 496;
 while(off <= 511) do
 	[user_area_page_number * 512 + off] = -1;
 	off = off + 2;
 endwhile;
-//-----------------------------
+//------------------------------------
 
-//---initl disk_status_table---
+//-------initl disk_status_table------
 off = 0;
 while(off < 10) do
-	[DISK_MAP_TABLE + (10 * [SYSTEM_STATUS_TABLE + 1]) + off] = -1;
+	[DISK_MAP_TABLE + (10 * [SYSTEM_STATUS_TABLE + (5 * CORE) + 1]) + off] = -1;
 	off = off + 1;
 endwhile;
-[DISK_MAP_TABLE + (10 * [SYSTEM_STATUS_TABLE + 1]) + 4] = [inode_pos + 8];	//map first block
-[DISK_MAP_TABLE + (10 * [SYSTEM_STATUS_TABLE + 1]) + 5] = [inode_pos + 9];	//map second block
-[DISK_MAP_TABLE + (10 * [SYSTEM_STATUS_TABLE + 1]) + 6] = [inode_pos + 10];	//map third block
-[DISK_MAP_TABLE + (10 * [SYSTEM_STATUS_TABLE + 1]) + 7] = [inode_pos + 11];	//map fourth block
-//-----------------------------
+[DISK_MAP_TABLE + (10 * [SYSTEM_STATUS_TABLE + (5 * CORE) + 1]) + 4] = [inode_pos + 8];	//map first block
+[DISK_MAP_TABLE + (10 * [SYSTEM_STATUS_TABLE + (5 * CORE) + 1]) + 5] = [inode_pos + 9];	//map second block
+[DISK_MAP_TABLE + (10 * [SYSTEM_STATUS_TABLE + (5 * CORE) + 1]) + 6] = [inode_pos + 10];//map third block
+[DISK_MAP_TABLE + (10 * [SYSTEM_STATUS_TABLE + (5 * CORE) + 1]) + 7] = [inode_pos + 11];//map fourth block
+//------------------------------------
 
 //------------------------------------
 
 [[PTBR + 16] * 512] = [[PTBR + 8] * 512 + 1];	//store entry location on top of stack
 SP = 8 * 512;					//userSP
 
-[PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1]*16) + 9] = 0;		//mode_flag to 0 USER
-PTBR = PAGE_TABLE_BASE + (20 * [SYSTEM_STATUS_TABLE + 1]);
-ireturn;
-//-------------------------------
+[PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + (5 * CORE) + 1]*16) + 9] = 0;		//mode_flag to 0 USER
+PTBR = PAGE_TABLE_BASE + (20 * [SYSTEM_STATUS_TABLE + (5 * CORE) + 1]);
 
-//--------------------------------------------------------------
+backup;
+R1 = RELEASE_LOCK;
+R2 = KERN_LOCK;
+call MOD_8;
+restore;
+
+ireturn;
+//------------------------------------
+//----------------------------------------------------------------------------------------------------------------

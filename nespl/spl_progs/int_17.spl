@@ -1,5 +1,10 @@
 //-------------------------------------------INTERRUPT 17 MODULE----------------------------------------------
 
+backup;
+R1 = ACQUIRE_KERN_LOCK;
+call MOD_8;
+restore;
+
 //extract info from user stack
 alias currPID R0;
 alias userSP R1;
@@ -9,7 +14,7 @@ alias sys_call_num R4;
 alias username R5;
 alias unencrypted_pswd R6;
 userSP = SP;
-currPID = [SYSTEM_STATUS_TABLE + 1];
+currPID = [SYSTEM_STATUS_TABLE + (5 * CORE) + 1];
 process_table = PROCESS_TABLE + (16 * currPID);
 ret = [PTBR + 2 * ((userSP - 1) / 512)] * 512 + (userSP - 1) % 512;
 sys_call_num = [[PTBR + 2 * ((userSP - 5) / 512)] * 512 + (userSP - 5) % 512];
@@ -33,6 +38,11 @@ if(sys_call_num == 27) then
 		[ret] = -2;
 		[process_table + 9] = 0;
 		SP = userSP;
+		backup;
+		R1 = RELEASE_LOCK;
+		R2 = KERN_LOCK;
+		call MOD_8;
+		restore;
 		ireturn;
 	endif;
 
@@ -54,6 +64,11 @@ if(sys_call_num == 27) then
 		[ret] = -1;
 		[process_table + 9] = 0;
 		SP = userSP;
+		backup;
+		R1 = RELEASE_LOCK;
+		R2 = KERN_LOCK;
+		call MOD_8;
+		restore;
 		ireturn;
 	endif;
 
@@ -66,6 +81,11 @@ if(sys_call_num == 27) then
 		[ret] = -1;
 		[process_table + 9] = 0;
 		SP = userSP;
+		backup;
+		R1 = RELEASE_LOCK;
+		R2 = KERN_LOCK;
+		call MOD_8;
+		restore;
 		ireturn;
 	endif;
 
@@ -82,15 +102,28 @@ if(sys_call_num == 27) then
 
 	//call scheduler
 	backup;
+	R1 = RELEASE_LOCK;
+	R2 = KERN_LOCK;
+	call MOD_8;
+	restore;
+	backup;
 	call MOD_5;
+	restore;
+	backup;
+	R1 = ACQUIRE_KERN_LOCK;
+	call MOD_8;
 	restore;
 
 	//success :)
 	[process_table + 9] = 0;
 	[ret] = 0;
 	SP = userSP;
-	ireturn;
 endif;
 //----------------------------------------------------------------------
-
+backup;
+R1 = RELEASE_LOCK;
+R2 = KERN_LOCK;
+call MOD_8;
+restore;
+ireturn;
 //------------------------------------------------------------------------------------------------------------

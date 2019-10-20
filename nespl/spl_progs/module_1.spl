@@ -21,10 +21,10 @@ if(funcNum == KILL_ALL) then
 		i = i + 1;
 	endwhile;
 
-	//exit_process() for (i != currpid) and init and idle
+	//exit_process() for (i != currpid), INIT, IDLE and IDLE2
 	i = 2;
 	while(i < MAX_PROC_NUM) do
-		if(([PROCESS_TABLE + (i * 16) + 4] != TERMINATED) && (i != currPID)) then
+		if(([PROCESS_TABLE + (i * 16) + 4] != TERMINATED) && (i != currPID) && (i != 14)) then
 			backup;
 			R1 = EXIT_PROCESS;
 			R2 = i;

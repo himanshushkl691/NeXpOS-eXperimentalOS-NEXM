@@ -1,5 +1,10 @@
 //----------------------------------------INTERRUPT 12 MODULE-------------------------------------------
 
+backup;
+R1 = ACQUIRE_KERN_LOCK;
+call MOD_8;
+restore;
+
 //extract info from user stack
 alias currPID R0;
 alias userSP R1;
@@ -7,7 +12,7 @@ alias process_table R2;
 alias ret R3;
 alias sys_call_num R4;
 userSP = SP;
-currPID = [SYSTEM_STATUS_TABLE + 1];
+currPID = [SYSTEM_STATUS_TABLE + (5 * CORE) + 1];
 process_table = PROCESS_TABLE + (16 * currPID);
 ret = [PTBR + 2 * ((userSP - 1) / 512)] * 512 + (userSP - 1) % 512;
 sys_call_num = [[PTBR + 2 * ((userSP - 5) / 512)] * 512 + (userSP - 5) % 512];
@@ -24,9 +29,30 @@ if(sys_call_num == 28) then
 		[ret] = -1;
 		[process_table + 9] = 0;
 		SP = userSP;
+		backup;
+		R1 = RELEASE_LOCK;
+		R2 = KERN_LOCK;
+		call MOD_8;
+		restore;
 		ireturn;
 	endif;
+	
+	//set logout_status so that secondary core schedules IDLE2
+	[SYSTEM_STATUS_TABLE + 7] = 1;
 
+	backup;
+	R1 = RELEASE_LOCK;
+	R2 = KERN_LOCK;
+	call MOD_8;
+	restore;
+	backup;
+	call MOD_5;
+	restore;
+	backup;
+	R1 = ACQUIRE_KERN_LOCK;
+	call MOD_8;
+	restore;
+	
 	//kill_all() in process manager
 	//kills all process except current process(shell),login,idle
 	backup;
@@ -34,6 +60,9 @@ if(sys_call_num == 28) then
 	R2 = currPID;
 	call MOD_1;
 	restore;
+	
+	//logout_status reset to zero
+	[SYSTEM_STATUS_TABLE + 7] = 0;	
 
 	//set state of shell process to terminated
 	[process_table + 4] = TERMINATED;
@@ -53,13 +82,27 @@ if(sys_call_num == 28) then
 
 	//scheduler
 	backup;
+	R1 = RELEASE_LOCK;
+	R2 = KERN_LOCK;
+	call MOD_8;
+	restore;
+	backup;
 	call MOD_5;
+	restore;
+	backup;
+	R1 = ACQUIRE_KERN_LOCK;
+	call MOD_8;
 	restore;
 	
 	[process_table + 9] = 0;
 	SP = userSP;
-	ireturn;
 endif;
 //---------------------------------------------------------------------
 
+backup;
+R1 = RELEASE_LOCK;
+R2 = KERN_LOCK;
+call MOD_8;
+restore;
+ireturn;
 //------------------------------------------------------------------------------------------------------

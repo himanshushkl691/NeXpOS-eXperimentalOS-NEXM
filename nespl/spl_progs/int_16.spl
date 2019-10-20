@@ -1,5 +1,10 @@
 //-------------------------------------INTERRUPT 16 MODULE----------------------------------------
 
+backup;
+R1 = ACQUIRE_KERN_LOCK;
+call MOD_8;
+restore;
+
 //extract info from user stack
 alias currPID R0;
 alias userSP R1;
@@ -8,7 +13,7 @@ alias sys_call_num R3;
 alias username R4;
 alias unencrypted_pswd R5;
 alias ret R6;
-currPID = [SYSTEM_STATUS_TABLE + 1];
+currPID = [SYSTEM_STATUS_TABLE + (5 * CORE) + 1];
 userSP = SP;
 process_table = PROCESS_TABLE + (currPID * 16);
 sys_call_num = [[PTBR + 2 * ((userSP - 5) / 512)] * 512 + (userSP - 5) % 512];
@@ -28,6 +33,11 @@ if(sys_call_num == 22) then
 	if(([SYSTEM_STATUS_TABLE] != 1) || (currPID != 2)) then
 		[ret] = -2;
 		[process_table + 9] = 0;
+		backup;
+		R1 = RELEASE_LOCK;
+		R2 = KERN_LOCK;
+		call MOD_8;
+		restore;
 		ireturn;
 	endif;
 
@@ -39,6 +49,11 @@ if(sys_call_num == 22) then
 			//if already existing :(
 			[ret] = -1;
 			[process_table + 9] = 0;
+			backup;
+			R1 = RELEASE_LOCK;
+			R2 = KERN_LOCK;
+			call MOD_8;
+			restore;
 			ireturn;
 		endif;
 		if((userid == -1) && ([USER_TABLE + (2 * i)] == -1) && ([USER_TABLE + (2 * i) + 1] == -1)) then
@@ -51,6 +66,11 @@ if(sys_call_num == 22) then
 	if(userid == -1) then
 		[ret] = -3;
 		[process_table + 9] = 0;
+		backup;
+		R1 = RELEASE_LOCK;
+		R2 = KERN_LOCK;
+		call MOD_8;
+		restore;
 		ireturn;
 	endif;
 
@@ -65,7 +85,6 @@ if(sys_call_num == 22) then
 	//success :)
 	[ret] = 0;
 	[process_table + 9] = 0;
-	ireturn;
 endif;
 //-------------------------------------------------------------------------
 
@@ -80,6 +99,11 @@ if(sys_call_num == 23) then
 	if(([SYSTEM_STATUS_TABLE] != 1) || (currPID != 2)) then
 		[ret] = -2;
 		[process_table + 9] = 0;
+		backup;
+		R1 = RELEASE_LOCK;
+		R2 = KERN_LOCK;
+		call MOD_8;
+		restore;
 		ireturn;	
 	endif;
 
@@ -87,6 +111,11 @@ if(sys_call_num == 23) then
 	if((username == "root") || (username == "kernel")) then
 		[ret] = -2;
 		[process_table + 9] = 0;
+		backup;
+		R1 = RELEASE_LOCK;
+		R2 = KERN_LOCK;
+		call MOD_8;
+		restore;
 		ireturn;
 	endif;
 
@@ -105,6 +134,11 @@ if(sys_call_num == 23) then
 	if(userid == -1) then
 		[ret] = -1;
 		[process_table + 9] = 0;
+		backup;
+		R1 = RELEASE_LOCK;
+		R2 = KERN_LOCK;
+		call MOD_8;
+		restore;
 		ireturn;
 	endif;
 
@@ -117,6 +151,11 @@ if(sys_call_num == 23) then
 			//if file is present undeleted :(
 			[ret] = -3;
 			[process_table + 9] = 0;
+			backup;
+			R1 = RELEASE_LOCK;
+			R2 = KERN_LOCK;
+			call MOD_8;
+			restore;
 			ireturn;
 		endif;
 		i = i + 1;
@@ -129,7 +168,6 @@ if(sys_call_num == 23) then
 	//success :)
 	[ret] = 0;
 	[process_table + 9] = 0;
-	ireturn;
 endif;
 //-------------------------------------------------------------------------
 
@@ -145,6 +183,11 @@ if(sys_call_num == 24) then
 	if(currPID != 2) then
 		[ret] = -1;
 		[process_table + 9] = 0;
+		backup;
+		R1 = RELEASE_LOCK;
+		R2 = KERN_LOCK;
+		call MOD_8;
+		restore;
 		ireturn;
 	endif;
 
@@ -163,6 +206,11 @@ if(sys_call_num == 24) then
 	if(userid == -1) then
 		[ret] = -2;
 		[process_table + 9] = 0;
+		backup;
+		R1 = RELEASE_LOCK;
+		R2 = KERN_LOCK;
+		call MOD_8;
+		restore;
 		ireturn;
 	endif;
 
@@ -171,6 +219,11 @@ if(sys_call_num == 24) then
 	if((([process_table + 3] != userid) && ([SYSTEM_STATUS_TABLE] != 1)) || (currPID != 2)) then
 		[ret] = -1;
 		[process_table + 9] = 0;
+		backup;
+		R1 = RELEASE_LOCK;
+		R2 = KERN_LOCK;
+		call MOD_8;
+		restore;
 		ireturn;
 	endif;
 
@@ -184,7 +237,6 @@ if(sys_call_num == 24) then
 	//success :)
 	[process_table + 9] = 0;
 	[ret] = 0;
-	ireturn;
 endif;
 //-------------------------------------------------------------------------
 
@@ -198,6 +250,11 @@ if(sys_call_num == 25) then
 	if((userid < 0) || (userid > 15)) then
 		[ret] = -1;
 		[process_table + 9] = 0;
+		backup;
+		R1 = RELEASE_LOCK;
+		R2 = KERN_LOCK;
+		call MOD_8;
+		restore;
 		ireturn;
 	endif;
 
@@ -205,6 +262,11 @@ if(sys_call_num == 25) then
 	if(([USER_TABLE + (2 * userid)] == -1)) then
 		[ret] = -1;
 		[process_table + 9] = 0;
+		backup;
+		R1 = RELEASE_LOCK;
+		R2 = KERN_LOCK;
+		call MOD_8;
+		restore;
 		ireturn;
 	endif;
 
@@ -214,7 +276,6 @@ if(sys_call_num == 25) then
 	//success :)
 	[process_table + 9] = 0;
 	[ret] = username;
-	ireturn;
 endif;
 //-------------------------------------------------------------------------
 
@@ -231,6 +292,11 @@ if(sys_call_num == 26) then
 			//success :)
 			[ret] = i;
 			[process_table + 9] = 0;
+			backup;
+			R1 = RELEASE_LOCK;
+			R2 = KERN_LOCK;
+			call MOD_8;
+			restore;
 			ireturn;
 		endif;
 		i = i + 1;
@@ -239,8 +305,12 @@ if(sys_call_num == 26) then
 	//failure :(
 	[ret] = -1;
 	[process_table + 9] = 0;
-	ireturn;
 endif;
 //-------------------------------------------------------------------------
-
+backup;
+R1 = RELEASE_LOCK;
+R2 = KERN_LOCK;
+call MOD_8;
+restore;
+ireturn;
 //------------------------------------------------------------------------------------------------

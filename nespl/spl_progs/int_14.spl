@@ -1,11 +1,16 @@
 //--------------------------------------INTERRUPT 14 MODULE-----------------------------------
 
+backup;
+R1 = ACQUIRE_KERN_LOCK;
+call MOD_8;
+restore;
+
 alias sys_call_num R0;
 alias userSP R1;
 alias currPID R2;
 alias curr_process_table R3;
 userSP = SP;
-currPID = [SYSTEM_STATUS_TABLE + 1];
+currPID = [SYSTEM_STATUS_TABLE + (5 * CORE) + 1];
 curr_process_table = PROCESS_TABLE + (currPID * 16);
 sys_call_num = [[PTBR + 2 * ((userSP - 5) / 512)] * 512 + ((userSP - 5) % 512)];
 [curr_process_table + 13] = SP;
@@ -27,6 +32,11 @@ then
 		[curr_process_table + 9] = 0;
 		[[PTBR + 2 * ((userSP - 1) / 512)] * 512 + ((userSP - 1) % 512)] = -1;
 		SP = userSP;
+		backup;
+		R1 = RELEASE_LOCK;
+		R2 = KERN_LOCK;
+		call MOD_8;
+		restore;
 		ireturn;
 	endif;
 	
@@ -42,7 +52,16 @@ then
 		
 		//call scheduler
 		backup;
+		R1 = RELEASE_LOCK;
+		R2 = KERN_LOCK;
+		call MOD_8;
+		restore;
+		backup;
 		call MOD_5;
+		restore;
+		backup;
+		R1 = ACQUIRE_KERN_LOCK;
+		call MOD_8;
 		restore;
 	endwhile;
 	
@@ -57,8 +76,6 @@ then
 	//change mode back to user
 	[curr_process_table + 9] = 0;
 	SP = userSP;
-
-	ireturn;
 endif;
 //---------------------------------------------------------
 
@@ -77,6 +94,11 @@ if(sys_call_num == 20) then
 		[curr_process_table + 9] = 0;
 		SP = userSP;
 		[[PTBR + 2 * ((userSP - 1) / 512)] * 512 + ((userSP - 1) % 512)] = -1;
+		backup;
+		R1 = RELEASE_LOCK;
+		R2 = KERN_LOCK;
+		call MOD_8;
+		restore;
 		ireturn;
 	endif;
 	
@@ -90,6 +112,11 @@ if(sys_call_num == 20) then
 			[curr_process_table + 9] = 0;
 			[[PTBR + 2 * ((userSP - 1) / 512)] * 512 + ((userSP - 1) % 512)] = -2;
 			SP = userSP;
+			backup;
+			R1 = RELEASE_LOCK;
+			R2 = KERN_LOCK;
+			call MOD_8;
+			restore;
 			ireturn;
 		endif;
 
@@ -114,8 +141,12 @@ if(sys_call_num == 20) then
 	//reset mode flag back to user
 	[curr_process_table + 9] = 0;
 	SP = userSP;
-	ireturn;
 endif;
 //---------------------------------------------------------
-
+backup;
+R1 = RELEASE_LOCK;
+R2 = KERN_LOCK;
+call MOD_8;
+restore;
+ireturn;
 //--------------------------------------------------------------------------------------------

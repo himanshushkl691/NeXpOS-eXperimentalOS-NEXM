@@ -14,7 +14,7 @@ if(funcNum == SWAP_OUT) then
 	while(i < 16) do
 		alias process_table R5;
 		process_table = PROCESS_TABLE + (16 * i);
-		if(([process_table + 4] == WAIT_PROCESS) && ([process_table + 6] == 0)) then
+		if((i != 14) && ([process_table + 4] == WAIT_PROCESS) && ([process_table + 6] == 0)) then
 			non_swapped_process = i;
 			break;
 		endif;
@@ -28,7 +28,7 @@ if(funcNum == SWAP_OUT) then
 		while(i < 16) do
 			alias process_table R5;
 			process_table = PROCESS_TABLE + (16 * i);
-			if(([process_table + 4] == WAIT_SEMAPHORE) && ([process_table + 6] == 0)) then
+			if((i != 14) && ([process_table + 4] == WAIT_SEMAPHORE) && ([process_table + 6] == 0)) then
 				non_swapped_process = i;
 				break;
 			endif;
@@ -46,7 +46,7 @@ if(funcNum == SWAP_OUT) then
 		while(i < 16) do
 			alias process_table R7;
 			process_table = PROCESS_TABLE + (16 * i);
-			if(([process_table + 6] == 0) && ([process_table] > mx) && (([process_table + 4] != RUNNING) && ([process_table + 4] != TERMINATED) && ([process_table + 4] != ALLOCATED))) then
+			if((i != 14) && ([process_table + 6] == 0) && ([process_table] > mx) && (([process_table + 4] != RUNNING) && ([process_table + 4] != TERMINATED) && ([process_table + 4] != ALLOCATED))) then
 				mx = [process_table];
 				pid = i;
 			endif;

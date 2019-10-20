@@ -1,8 +1,8 @@
 //--------------------------------------------Timer Interrupt Handler-------------------------------------------------
 
 //save user stack pointer
-[PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1] * 16) + 13] = SP;
-SP = [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1]*16) + 11] * 512 - 1;
+[PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + (5 * CORE) + 1] * 16) + 13] = SP;
+SP = [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + (5 * CORE) + 1] * 16) + 11] * 512 - 1;
 
 //save context
 backup;
@@ -18,11 +18,15 @@ if([SYSTEM_STATUS_TABLE + 5] != 0) then
 	//swapping is on now
 	//Call Swap In/Out, if necessary
 	
-	if([SYSTEM_STATUS_TABLE + 1] == 15) then
+	if((CORE == 0) && ([SYSTEM_STATUS_TABLE + 1] == 15)) then
 		//current process is swapper_daemon
 		//paging_status is SWAP_OUT
 		if([SYSTEM_STATUS_TABLE + 5] == SWAP_OUT) then
 			//swap_out() in pager module
+			backup;
+			R1 = ACQUIRE_KERN_LOCK;
+			call MOD_8;
+			restore;
 			backup;
 			R1 = SWAP_OUT;
 			R2 = [SYSTEM_STATUS_TABLE + 1];
@@ -31,11 +35,20 @@ if([SYSTEM_STATUS_TABLE + 5] != 0) then
 				print "SOUTERR";
 			endif;
 			restore;
+			backup;
+			R1 = RELEASE_LOCK;
+			R2 = KERN_LOCK;
+			call MOD_8;
+			restore;
 		endif;
 		
 		//paging_status is SWAP_IN
 		if([SYSTEM_STATUS_TABLE + 5] == SWAP_IN) then
 			//swap_in() in pager module
+			backup;
+			R1 = ACQUIRE_KERN_LOCK;
+			call MOD_8;
+			restore;
 			backup;
 			R1 = SWAP_IN;
 			R2 = [SYSTEM_STATUS_TABLE + 1];
@@ -43,6 +56,11 @@ if([SYSTEM_STATUS_TABLE + 5] != 0) then
 			if(R0 == -1) then
 				print "SINERR";
 			endif;
+			restore;
+			backup;
+			R1 = RELEASE_LOCK;
+			R2 = KERN_LOCK;
+			call MOD_8;
 			restore;
 		endif;
 	endif;
@@ -71,7 +89,7 @@ else
 endif;
 
 //set state of current process to ready from running
-[PROCESS_TABLE + (16 * [SYSTEM_STATUS_TABLE + 1]) + 4] = READY;
+[PROCESS_TABLE + (16 * [SYSTEM_STATUS_TABLE + (5 * CORE) + 1]) + 4] = READY;
 
 i = 0;
 //tracks how long process is in memory/swap
@@ -88,8 +106,8 @@ call MOD_5;
 restore;
 
 //set SP to user stack of scheduled process
-SP = [PROCESS_TABLE+([SYSTEM_STATUS_TABLE + 1] * 16) + 13];
-[PROCESS_TABLE+([SYSTEM_STATUS_TABLE+1]*16)+9] = 0;
+SP = [PROCESS_TABLE+([SYSTEM_STATUS_TABLE + (5 * CORE) + 1] * 16) + 13];
+[PROCESS_TABLE+([SYSTEM_STATUS_TABLE+(5*CORE)+1]*16)+9] = 0;
 
 ireturn;
 //--------------------------------------------------------------------------------------------------------------------

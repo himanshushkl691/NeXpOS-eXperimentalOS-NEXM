@@ -1,11 +1,17 @@
 //-------------------------------INTERRUPT 8 MODULE-------------------------------
 
+backup;
+R1 = ACQUIRE_KERN_LOCK;
+call MOD_8;
+restore;
+
 //------------Fork System Call(8)(final)--------------
-[PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1] * 16) + 9] = 8;		//change mode_flag to fork_sys_call
-[PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1] * 16) + 13] = SP;		//save userSP of parent process
+
+[PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + (5 * CORE) + 1] * 16) + 9] = 8;	//change mode_flag to fork_sys_call
+[PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + (5 * CORE) + 1] * 16) + 13] = SP;		//save userSP of parent process
 alias ret R15;
 ret = [PTBR + 2 * ((SP - 1) / 512)] * 512 + (SP - 1) % 512;
-SP = [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1] * 16) + 11] * 512 - 1;	//user area page
+SP = [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + (5 * CORE) + 1] * 16) + 11] * 512 - 1;	//user area page
 
 //Allocate memory and set Process_Table
 R1 = GET_PCB_ENTRY;
@@ -13,9 +19,14 @@ call MOD_1;
 
 //if no pcb entry is available
 if(R0 == -1) then
-	[PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1] * 16) + 9] = 0;
-	SP = [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1] * 16) + 13];
+	[PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + (5 * CORE) + 1] * 16) + 9] = 0;
+	SP = [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + (5 * CORE) + 1] * 16) + 13];
 	[ret] = -1;
+	backup;
+	R1 = RELEASE_LOCK;
+	R2 = KERN_LOCK;
+	call MOD_8;
+	restore;
 	ireturn;
 endif;
 
@@ -26,7 +37,7 @@ alias parent_PTBR R13;
 alias child_PTBR R14;
 alias parent_PROCESS_TABLE R5;
 alias child_PROCESS_TABLE R6;
-parentPID = [SYSTEM_STATUS_TABLE + 1];
+parentPID = [SYSTEM_STATUS_TABLE + (5 * CORE) + 1];
 childPID = R0;
 parent_PTBR = PAGE_TABLE_BASE + (20 * parentPID);
 child_PTBR = PAGE_TABLE_BASE + (20 * childPID);
@@ -114,7 +125,6 @@ while(i < 512) do
 	i = i + 2;
 endwhile;
 
-
 //copy parent per-process_disk_map_table to child
 i = 0;
 while(i < 10) do
@@ -176,7 +186,11 @@ parent_user_stack = [parent_PROCESS_TABLE + 13];
 [parent_PROCESS_TABLE + 9] = 0;
 
 SP = [parent_PROCESS_TABLE + 13];
+backup;
+R1 = RELEASE_LOCK;
+R2 = KERN_LOCK;
+call MOD_8;
+restore;
 ireturn;
 //----------------------------------------------------
-
 //--------------------------------------------------------------------------------

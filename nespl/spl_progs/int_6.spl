@@ -1,5 +1,10 @@
 //---------------------------------------------INTERRUPT 6 MODULE------------------------------------------------------
 
+backup;
+R1 = ACQUIRE_KERN_LOCK;
+call MOD_8;
+restore;
+
 //--------------------Read System Call(7)(final)---------------
 alias currPID R0;
 alias userSP R1;
@@ -8,17 +13,15 @@ alias file_descriptor R3;
 alias ret R4;
 alias content_addr R5;
 
-currPID = [SYSTEM_STATUS_TABLE + 1];
-userSP = SP;
-process_table = PROCESS_TABLE + (16 * currPID);
-file_descriptor = [[PTBR + 2 * ((userSP - 4) / 512)] * 512 + (userSP - 4) % 512];
-content_addr = [[PTBR + 2 * ((userSP - 3) / 512)] * 512 + (userSP - 3) % 512];
-ret = [PTBR + 2 * ((userSP - 1) / 512)] * 512 + (userSP - 1) % 512;
-
-[process_table + 9] = 7;
-
-[process_table + 13] = SP;
-SP = [process_table + 11] * 512 - 1;
+currPID 		= [SYSTEM_STATUS_TABLE + (5 * CORE) + 1];
+userSP 			= SP;
+process_table 		= PROCESS_TABLE + (16 * currPID);
+file_descriptor 	= [[PTBR + 2 * ((userSP - 4) / 512)] * 512 + (userSP - 4) % 512];
+content_addr 		= [[PTBR + 2 * ((userSP - 3) / 512)] * 512 + (userSP - 3) % 512];
+ret 			= [PTBR + 2 * ((userSP - 1) / 512)] * 512 + (userSP - 1) % 512;
+[process_table + 9] 	= 7;
+[process_table + 13] 	= SP;
+SP 			= [process_table + 11] * 512 - 1;
 
 if(file_descriptor == -1) then
 	//read from terminal
@@ -35,6 +38,11 @@ else
 		[ret] = -1;
 		[process_table + 9] = 0;
 		SP = userSP;
+		backup;
+		R1 = RELEASE_LOCK;
+		R2 = KERN_LOCK;
+		call MOD_8;
+		restore;
 		ireturn;
 	endif;
 	alias resource_table R6;
@@ -45,13 +53,18 @@ else
 		[ret] = -1;
 		[process_table + 9] = 0;
 		SP = userSP;
+		backup;
+		R1 = RELEASE_LOCK;
+		R2 = KERN_LOCK;
+		call MOD_8;
+		restore;
 		ireturn;
 	endif;
 
 	alias open_file_entry R7;
 	alias inode R8;
 	open_file_entry = [resource_table + (2 * file_descriptor) + 1];
-	inode = [OPEN_FILE_TABLE + (4 * open_file_entry)];
+	inode 		= [OPEN_FILE_TABLE + (4 * open_file_entry)];
 
 	//acquire_inode() in resource manager
 	backup;
@@ -65,6 +78,11 @@ else
 		[ret] = -1;
 		[process_table + 9] = 0;
 		SP = userSP;
+		backup;
+		R1 = RELEASE_LOCK;
+		R2 = KERN_LOCK;
+		call MOD_8;
+		restore;
 		ireturn;
 	endif;
 	restore;
@@ -89,6 +107,11 @@ else
 			[ret] = -2;
 			[process_table + 9] = 0;
 			SP = userSP;
+			backup;
+			R1 = RELEASE_LOCK;
+			R2 = KERN_LOCK;
+			call MOD_8;
+			restore;
 			ireturn;
 		endif;
 
@@ -109,6 +132,11 @@ else
 			[ret] = -2;
 			[process_table + 9] = 0;
 			SP = userSP;
+			backup;
+			R1 = RELEASE_LOCK;
+			R2 = KERN_LOCK;
+			call MOD_8;
+			restore;
 			ireturn;
 		endif;
 		
@@ -143,8 +171,11 @@ endif;
 [ret] = 0;
 [process_table + 9] = 0;
 SP = userSP;
-
+backup;
+R1 = RELEASE_LOCK;
+R2 = KERN_LOCK;
+call MOD_8;
+restore;
 ireturn;
 //-------------------------------------------------------------
-
 //---------------------------------------------------------------------------------------------------------------------

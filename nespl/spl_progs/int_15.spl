@@ -1,12 +1,17 @@
 //-------------------------------------INTERRUPT 15 MODULE---------------------------------------
 
+backup;
+R1 = ACQUIRE_KERN_LOCK;
+call MOD_8;
+restore;
+
 //-----------------Shutdown System Call(21)(final)-----------------
 alias currPID R0;
 alias process_table R1;
 alias userSP R2;
 alias ret R3;
 userSP = SP;
-currPID = [SYSTEM_STATUS_TABLE + 1];
+currPID = [SYSTEM_STATUS_TABLE + (5 * CORE) + 1];
 process_table = PROCESS_TABLE + (16 * currPID);
 ret = [PTBR + 2 * ((userSP - 1) / 512)] * 512 + (userSP - 1) % 512;
 [process_table + 13] = SP;
@@ -14,12 +19,20 @@ SP = [process_table + 11] * 512 - 1;
 [process_table + 9] = 21;
 
 //shutdown system call can only be invoked from shell process of root user return -1 if not :(
-if(([SYSTEM_STATUS_TABLE + 1] != 2) || ([process_table + 3] != 1)) then
+if(([SYSTEM_STATUS_TABLE + (5 * CORE) + 1] != 2) || ([process_table + 3] != 1)) then
 	[ret] = -1;
 	[process_table + 9] = 0;
 	SP = userSP;
+	backup;
+	R1 = RELEASE_LOCK;
+	R2 = KERN_LOCK;
+	call MOD_8;
+	restore;
 	ireturn;
 endif;
+
+reset;
+[ACCESS_LOCK_TABLE + 1] = 0;	//sched_lock to 0
 
 //kill_all() in process manager
 backup;
@@ -80,6 +93,12 @@ R2 = currPID;	//pid of current process
 R3 = 61;	//page number
 R4 = 2;		//block number
 call MOD_4;
+restore;
+
+backup;
+R1 = RELEASE_LOCK;
+R2 = KERN_LOCK;
+call MOD_8;
 restore;
 
 halt;

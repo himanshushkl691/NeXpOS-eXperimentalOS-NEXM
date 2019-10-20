@@ -1,5 +1,10 @@
 //-------------------------------------------INTERRUPT 5 MODULE-----------------------------------------
 
+backup;
+R1 = ACQUIRE_KERN_LOCK;
+call MOD_8;
+restore;
+
 //extract info from user stack
 alias currPID R0;
 alias userSP R1;
@@ -7,7 +12,7 @@ alias process_table R2;
 alias ret R3;
 alias sys_call_num R4;
 userSP = SP;
-currPID = [SYSTEM_STATUS_TABLE + 1];
+currPID = [SYSTEM_STATUS_TABLE + (5 * CORE) + 1];
 process_table = PROCESS_TABLE + (16 * currPID);
 ret = [PTBR + 2 * ((userSP - 1) / 512)] * 512 + (userSP - 1) % 512;
 sys_call_num = [[PTBR + 2 * ((userSP - 5) / 512)] * 512 + (userSP - 5) % 512];
@@ -39,6 +44,11 @@ if(sys_call_num == 2) then
 		[ret] = -3;
 		[process_table + 9] = 0;
 		SP = userSP;
+		backup;
+		R1 = RELEASE_LOCK;
+		R2 = KERN_LOCK;
+		call MOD_8;
+		restore;
 		ireturn;
 	endif;
 
@@ -55,6 +65,11 @@ if(sys_call_num == 2) then
 		[ret] = -1;
 		[process_table + 9] = 0;
 		SP = userSP;
+		backup;
+		R1 = RELEASE_LOCK;
+		R2 = KERN_LOCK;
+		call MOD_8;
+		restore;
 		ireturn;
 	endif;
 
@@ -63,6 +78,11 @@ if(sys_call_num == 2) then
 		[ret] = -2;
 		[process_table + 9] = 0;
 		SP = userSP;
+		backup;
+		R1 = RELEASE_LOCK;
+		R2 = KERN_LOCK;
+		call MOD_8;
+		restore;
 		ireturn;
 	endif;
 	
@@ -74,7 +94,6 @@ if(sys_call_num == 2) then
 	[process_table + 9] = 0;
 	[ret] = i;
 	SP = userSP;
-	ireturn;
 endif;
 //-------------------------------------------------------------
 
@@ -94,6 +113,11 @@ if(sys_call_num == 3) then
 		[ret] = -1;
 		[process_table + 9] = 0;
 		SP = userSP;
+		backup;
+		R1 = RELEASE_LOCK;
+		R2 = KERN_LOCK;
+		call MOD_8;
+		restore;
 		ireturn;
 	endif;
 
@@ -102,6 +126,11 @@ if(sys_call_num == 3) then
 		[ret] = -1;
 		[process_table + 9] = 0;
 		SP = userSP;
+		backup;
+		R1 = RELEASE_LOCK;
+		R2 = KERN_LOCK;
+		call MOD_8;
+		restore;
 		ireturn;
 	endif;
 
@@ -123,7 +152,6 @@ if(sys_call_num == 3) then
 	[ret] = 0;
 	[process_table + 9] = 0;
 	SP = userSP;
-	ireturn;
 endif;
 //-------------------------------------------------------------
 
@@ -150,6 +178,11 @@ if(sys_call_num == 6) then
 		[ret] = -1;
 		[process_table + 9] = 0;
 		SP = userSP;
+		backup;
+		R1 = RELEASE_LOCK;
+		R2 = KERN_LOCK;
+		call MOD_8;
+		restore;
 		ireturn;
 	endif;
 
@@ -158,6 +191,11 @@ if(sys_call_num == 6) then
 		[ret] = -1;
 		[process_table + 9] = 0;
 		SP = userSP;
+		backup;
+		R1 = RELEASE_LOCK;
+		R2 = KERN_LOCK;
+		call MOD_8;
+		restore;
 		ireturn;
 	endif;
 
@@ -178,16 +216,17 @@ if(sys_call_num == 6) then
 		[ret] = -1;
 		[process_table + 9] = 0;
 		SP = userSP;
+		backup;
+		R1 = RELEASE_LOCK;
+		R2 = KERN_LOCK;
+		call MOD_8;
+		restore;
 		ireturn;
 	endif;
 	restore;
 	
 	//get current lseek position from open_file_table
 	lseek = [open_file_table + 2];
-	
-	//backup;
-	//print lseek;
-	//restore;
 	
 	file_size = [inode_table + 2];
 	//if root_file then size is fixed 480
@@ -206,6 +245,11 @@ if(sys_call_num == 6) then
 		[ret] = -2;
 		[process_table + 9] = 0;
 		SP = userSP;
+		backup;
+		R1 = RELEASE_LOCK;
+		R2 = KERN_LOCK;
+		call MOD_8;
+		restore;	
 		ireturn;
 	endif;
 	
@@ -235,8 +279,12 @@ if(sys_call_num == 6) then
 	[ret] = 0;
 	[process_table + 9] = 0;
 	SP = userSP;
-	ireturn;
 endif;
 //-------------------------------------------------------------
-
+backup;
+R1 = RELEASE_LOCK;
+R2 = KERN_LOCK;
+call MOD_8;
+restore;
+ireturn;
 //------------------------------------------------------------------------------------------------------
