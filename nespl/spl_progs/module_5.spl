@@ -12,7 +12,7 @@ alias tempPID R3;
 
 multipush(BP);
 
-current_pid = [SYSTEM_STATUS_TABLE + 1];
+current_pid = [SYSTEM_STATUS_TABLE + (5 * CORE) + 1];
 process_table_entry = PROCESS_TABLE+(current_pid*16);
 
 //save context of current process
@@ -22,10 +22,9 @@ process_table_entry = PROCESS_TABLE+(current_pid*16);
 
 //--------------------Select new process-----------------------
 
-newPID = 0;	//by default idle
-tempPID = current_pid+1;
-
 if(CORE == 0) then
+	newPID = 0;	//by default idle
+	tempPID = current_pid+1;
 	//PRIMARY CORE IS RUNNING SCHEDULER
 	if([SYSTEM_STATUS_TABLE + 5] != 0) then
 		//paging on
@@ -54,7 +53,27 @@ if(CORE == 0) then
 		endif;
 	endif;
 else
+	newPID = 14;	//by default IDLE2
+	tempPID = current_pid+1;
 	//SECONDARY CORE IS RUNNING SCHEDULER
+	if(([SYSTEM_STATUS_TABLE + 5] != 0) || ([SYSTEM_STATUS_TABLE + 7] == 1)) then
+		//paging_status or logout_status is on IDLE2 must be scheduled
+		newPID = 14;
+	else
+		//select process from {3,...,14}/{process running on primary core}
+		if(tempPID == 15) then
+			tempPID = 3;
+		endif;
+		while(tempPID < 15) do
+			alias temp R4;
+			temp = PROCESS_TABLE + (tempPID * 16);
+			if(((([temp + 4] == READY) || ([temp + 4] == CREATED)) && ([temp + 6] == 0)) && (tempPID != [SYSTEM_STATUS_TABLE + 1]) && (tempPID != 0) && (tempPID != 1) && (tempPID != 2)) then
+				newPID = tempPID;
+				break;
+			endif;
+			tempPID = tempPID + 1;
+		endwhile;
+	endif;
 endif;
 
 //-------------------------------------------------------------

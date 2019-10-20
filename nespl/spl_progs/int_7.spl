@@ -1,5 +1,10 @@
 //-------------------------------------------INTERRUPT 7 MODULE-----------------------------------------------------
 
+backup;
+R1 = ACQUIRE_KERN_LOCK;
+call MOD_8;
+restore;
+
 //---------------------Write System Call(5)(final)-----------------------------
 alias currPID R0;
 alias userSP R1;
@@ -8,17 +13,17 @@ alias file_descriptor R3;
 alias ret R4;
 alias content R5;
 
-currPID = [SYSTEM_STATUS_TABLE + 1];
-userSP = SP;
-process_table = PROCESS_TABLE + (16 * currPID);
+currPID 	= [SYSTEM_STATUS_TABLE + (5 * CORE) + 1];
+userSP 		= SP;
+process_table 	= PROCESS_TABLE + (16 * currPID);
 file_descriptor = [[PTBR + 2 * ((userSP - 4) / 512)] * 512 + (userSP - 4) % 512];
 content 	= [[PTBR + 2 * ((userSP - 3) / 512)] * 512 + (userSP - 3) % 512];
 ret 		= [PTBR + 2 * ((userSP - 1) / 512)] * 512 + (userSP - 1) % 512;
 
-[process_table + 9] = 5;
+[process_table + 9] 	= 5;
 
-[process_table + 13] = SP;
-SP = [process_table + 11] * 512 - 1;
+[process_table + 13] 	= SP;
+SP 			= [process_table + 11] * 512 - 1;
 
 if (file_descriptor == -2) then
 	//write on terminal
@@ -35,6 +40,11 @@ else
 		[ret] = -1;
 		[process_table + 9] = 0;
 		SP = userSP;
+		backup;
+		R1 = RELEASE_LOCK;
+		R2 = KERN_LOCK;
+		call MOD_8;
+		restore;
 		ireturn;
 	endif;
 
@@ -46,6 +56,11 @@ else
 		[ret] = -1;
 		[process_table + 9] = 0;
 		SP = userSP;
+		backup;
+		R1 = RELEASE_LOCK;
+		R2 = KERN_LOCK;
+		call MOD_8;
+		restore;
 		ireturn;
 	endif;
 
@@ -66,6 +81,11 @@ else
 				[ret] = -3;
 				[process_table + 9] = 0;
 				SP = userSP;
+				backup;
+				R1 = RELEASE_LOCK;
+				R2 = KERN_LOCK;
+				call MOD_8;
+				restore;
 				ireturn;
 			endif;
 		endif;
@@ -83,6 +103,11 @@ else
 		[ret] = -1;
 		[process_table + 9] = 0;
 		SP = userSP;
+		backup;
+		R1 = RELEASE_LOCK;
+		R2 = KERN_LOCK;
+		call MOD_8;
+		restore;
 		ireturn;
 	endif;
 	restore;
@@ -102,6 +127,11 @@ else
 		[ret] = -2;
 		[process_table + 9] = 0;
 		SP = userSP;
+		backup;
+		R1 = RELEASE_LOCK;
+		R2 = KERN_LOCK;
+		call MOD_8;
+		restore;
 		ireturn;
 	endif;
 	
@@ -130,6 +160,11 @@ else
 			[ret] = -2;
 			[process_table + 9] = 0;
 			SP = userSP;
+			backup;
+			R1 = RELEASE_LOCK;
+			R2 = KERN_LOCK;
+			call MOD_8;
+			restore;
 			ireturn;
 		endif;
 		
@@ -177,6 +212,11 @@ endif;
 [ret] = 0;
 [process_table + 9] = 0;
 SP = userSP;
+backup;
+R1 = RELEASE_LOCK;
+R2 = KERN_LOCK;
+call MOD_8;
+restore;
 ireturn;
 //-----------------------------------------------------------------------------
 

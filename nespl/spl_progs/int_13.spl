@@ -1,10 +1,15 @@
 //------------------------------------INTERRUPT 13 MODULE-----------------------------------
 
+backup;
+R1 = ACQUIRE_KERN_LOCK;
+call MOD_8;
+restore;
+
 alias sys_call_num R0;
 alias userSP R1;
 alias currPID R2;
 userSP = SP;
-currPID = [SYSTEM_STATUS_TABLE + 1];
+currPID = [SYSTEM_STATUS_TABLE + (5 * CORE) + 1];
 sys_call_num = [[PTBR + 2 * ((userSP - 5) / 512)] * 512 + ((userSP - 5) % 512)];
 
 //switch to kernel stack
@@ -36,6 +41,11 @@ if(sys_call_num == 17) then
 		[PROCESS_TABLE + (currPID * 16) + 9] = 0;
 		[[PTBR + 2 * ((userSP - 1) / 512)] * 512 + ((userSP - 1) % 512)] = -1;
 		SP = userSP;
+		backup;
+		R1 = RELEASE_LOCK;
+		R2 = KERN_LOCK;
+		call MOD_8;
+		restore;
 		ireturn;
 	endif;
 	
@@ -56,6 +66,11 @@ if(sys_call_num == 17) then
 		[PROCESS_TABLE + (currPID * 16) + 9] = 0;
 		[[PTBR + 2 * ((userSP - 1) / 512)] * 512 + ((userSP - 1) % 512)] = -2;
 		SP = userSP;
+		backup;
+		R1 = RELEASE_LOCK;
+		R2 = KERN_LOCK;
+		call MOD_8;
+		restore;
 		ireturn;
 	endif;
 	
@@ -68,7 +83,6 @@ if(sys_call_num == 17) then
 	
 	//set return value as per-process resource table entry index
 	[[PTBR + 2 * ((userSP - 1) / 512)] * 512 + ((userSP - 1) % 512)] = (freeEntry - 496) / 2;
-	ireturn;
 endif;
 //----------------------------------------------------
 
@@ -85,6 +99,11 @@ if(sys_call_num == 18) then
 		[[PTBR + 2 * ((userSP - 1) / 512)] * 512 + ((userSP - 1) % 512)] = -1;
 		[PROCESS_TABLE + (currPID * 16) + 9] = 0;
 		SP = userSP;
+		backup;
+		R1 = RELEASE_LOCK;
+		R2 = KERN_LOCK;
+		call MOD_8;
+		restore;
 		ireturn;		
 	endif;
 
@@ -101,8 +120,14 @@ if(sys_call_num == 18) then
 	
 	[PROCESS_TABLE + (currPID * 16) + 9] = 0;
 	SP = userSP;
-	ireturn;
 endif;
 //----------------------------------------------------
 
+backup;
+R1 = RELEASE_LOCK;
+R2 = KERN_LOCK;
+call MOD_8;
+restore;
+
+ireturn;
 //------------------------------------------------------------------------------------------

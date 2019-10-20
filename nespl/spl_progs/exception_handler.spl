@@ -1,95 +1,115 @@
-//------------------EXCEPTION HANDLER--------------------
-[PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1] * 16) + 9] = -1;
+//---------------------------------Exception Handler-------------------------------
+backup;
+R1 = ACQUIRE_KERN_LOCK;
+call MOD_8;
+restore;
+[PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + (5 * CORE) + 1] * 16) + 9] = -1;
 //save SP in UPTR
-[PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1] * 16) + 13] = SP;
+[PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + (5 * CORE) + 1] * 16) + 13] = SP;
 //switch to kernel stack
-SP = [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1] * 16) + 11] * 512 - 1;
+SP = [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + (5 * CORE) + 1] * 16) + 11] * 512 - 1;
 backup;
 multipush(EIP);
-//print "************";
-//print "ExcInstPtr";
-//print EIP;
-//print "ExcCause";
-//print EC;
 
 //if cause of exception is illegal instruction
 if(EC == 1) then
-	//print "IllegalInst";
-	//print "************";
+	print "IllInst";
 	backup;
 	R1 = EXIT_PROCESS;
-	R2 = [SYSTEM_STATUS_TABLE + 1];
+	R2 = [SYSTEM_STATUS_TABLE + (5 * CORE) + 1];
 	call MOD_1;
 	restore;
+	backup;
+	R1 = RELEASE_LOCK;
+	R2 = KERN_LOCK;
+	call MOD_8;
+	restore;
 	call MOD_5;
+	backup;
+	R1 = ACQUIRE_KERN_LOCK;
+	call MOD_8;
+	restore;	
 endif;
 
 //cause of exception is illegal memory access
 if(EC == 2) then
 	print "IllMem";
-	//print "************";
 	backup;
 	R1 = EXIT_PROCESS;
-	R2 = [SYSTEM_STATUS_TABLE + 1];
+	R2 = [SYSTEM_STATUS_TABLE + (5 * CORE) + 1];
 	call MOD_1;
 	restore;
+	backup;
+	R1 = RELEASE_LOCK;
+	R2 = KERN_LOCK;
+	call MOD_8;
+	restore;
 	call MOD_5;
+	backup;
+	R1 = ACQUIRE_KERN_LOCK;
+	call MOD_8;
+	restore;	
 endif;
 
 //cause of exception is arithmetic exception
 if(EC == 3) then
-	//print "************";
+	print "ArthExc";
 	backup;
 	R1 = EXIT_PROCESS;
-	R2 = [SYSTEM_STATUS_TABLE + 1];
+	R2 = [SYSTEM_STATUS_TABLE + (5 * CORE) + 1];
 	call MOD_1;
 	restore;
+	backup;
+	R1 = RELEASE_LOCK;
+	R2 = KERN_LOCK;
+	call MOD_8;
+	restore;
 	call MOD_5;
+	backup;
+	R1 = ACQUIRE_KERN_LOCK;
+	call MOD_8;
+	restore;	
 endif;
 
 //page fault
 if(EC == 0) then
-	//print "PageFault!";
-	//print EPN;
-	//print "************";
 	if((EPN == 4) || (EPN == 5) || (EPN == 6) || (EPN == 7)) then
 		backup;
 		multipush(EC,EIP,EPN,EMA);
 		R1 = GET_CODE_PAGE;
-		R2 = [DISK_MAP_TABLE + (10 * [SYSTEM_STATUS_TABLE + 1]) + EPN];
+		R2 = [DISK_MAP_TABLE + (10 * [SYSTEM_STATUS_TABLE + (5 * CORE) + 1]) + EPN];
 		call MOD_2;
 		multipop(EC,EIP,EPN,EMA);
-		[PAGE_TABLE_BASE + ([SYSTEM_STATUS_TABLE + 1] * 20) + (2 * EPN)]= R0;
-		[PAGE_TABLE_BASE + ([SYSTEM_STATUS_TABLE + 1] * 20) + (2 * EPN) + 1] = "1100";
+		[PAGE_TABLE_BASE + ([SYSTEM_STATUS_TABLE + (5 * CORE) + 1] * 20) + (2 * EPN)]= R0;
+		[PAGE_TABLE_BASE + ([SYSTEM_STATUS_TABLE + (5 * CORE) + 1] * 20) + (2 * EPN) + 1] = "1100";
 		restore;
 	endif;
 	if((EPN == 2) || (EPN == 3)) then
-		//backup;
-		//R1 = GET_FREE_PAGE;
-		//call MOD_2;
-		//[PAGE_TABLE_BASE + ([SYSTEM_STATUS_TABLE + 1] * 20) + (2 * EPN)] = R0;
-		//[PAGE_TABLE_BASE + ([SYSTEM_STATUS_TABLE + 1] * 20) + (2 * EPN) + 1] = "1110";
-		//restore;
 		backup;
 		R1 = GET_FREE_PAGE;
 		call MOD_2;
-		[PAGE_TABLE_BASE + ([SYSTEM_STATUS_TABLE + 1] * 20) + 4] = R0;
-		[PAGE_TABLE_BASE + ([SYSTEM_STATUS_TABLE + 1] * 20) + 5] = "1110";
+		[PAGE_TABLE_BASE + ([SYSTEM_STATUS_TABLE + (5 * CORE) + 1] * 20) + 4] = R0;
+		[PAGE_TABLE_BASE + ([SYSTEM_STATUS_TABLE + (5 * CORE) + 1] * 20) + 5] = "1110";
 		restore;
 		backup;
 		R1 = GET_FREE_PAGE;
 		call MOD_2;
-		[PAGE_TABLE_BASE + ([SYSTEM_STATUS_TABLE + 1] * 20) + 6] = R0;
-		[PAGE_TABLE_BASE + ([SYSTEM_STATUS_TABLE + 1] * 20) + 7] = "1110";
+		[PAGE_TABLE_BASE + ([SYSTEM_STATUS_TABLE + (5 * CORE) + 1] * 20) + 6] = R0;
+		[PAGE_TABLE_BASE + ([SYSTEM_STATUS_TABLE + (5 * CORE) + 1] * 20) + 7] = "1110";
 		restore;
 	endif;
 endif;
 
-[PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1] * 16) + 9] = 0;
+[PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + (5 * CORE) + 1] * 16) + 9] = 0;
 multipop(EIP);
 restore;
-SP = [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1] * 16) + 13];
+SP = [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + (5 * CORE) + 1] * 16) + 13];
 SP = SP + 1;
 [[PTBR + (2 * (SP / 512))] * 512 + (SP % 512)] = EIP;
+backup;
+R1 = RELEASE_LOCK;
+R2 = KERN_LOCK;
+call MOD_8;
+restore;
 ireturn;
 //-------------------------------------------------------
