@@ -1,8 +1,4 @@
 //--------------CONSOLE INTERRUPT HANDLER--------------
-backup;
-R1 = ACQUIRE_KERN_LOCK;
-call MOD_8;
-restore;
 
 [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + (5 * CORE) + 1] * 16) + 13] = SP;
 SP = [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + (5 * CORE) + 1] * 16) + 11] * 512 - 1;
@@ -17,20 +13,23 @@ process_table_entry = PROCESS_TABLE + 16 * reqPID;
 [process_table_entry + 8] = P0;
 
 backup;
+R1 = ACQUIRE_KERN_LOCK;
+call MOD_8;
+restore;
+backup;
 R1 = 9;
 R2 = reqPID;
 call MOD_0;
 restore;
-
-restore;
-
-SP = [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + (5 * CORE) + 1] * 16) + 13];
-
 backup;
 R1 = RELEASE_LOCK;
 R2 = KERN_LOCK;
 call MOD_8;
 restore;
+
+restore;
+
+SP = [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + (5 * CORE) + 1] * 16) + 13];
 
 ireturn;
 //-----------------------------------------------------

@@ -1,4 +1,5 @@
-load --os $HOME/Desktop/mynexpos/nespl/spl_progs/final_os_startup.xsm
+load --os=primary $HOME/Desktop/mynexpos/nespl/spl_progs/final_os_startup.xsm
+load --os=secondary $HOME/Desktop/mynexpos/nespl/spl_progs/secondary_bootstrap.xsm
 load --init $HOME/Desktop/mynexpos/expl/sample/login.xsm
 load --idle $HOME/Desktop/mynexpos/expl/sample/idle.xsm
 load --shell $HOME/Desktop/mynexpos/expl/sample/ExtShell.xsm
@@ -11,7 +12,7 @@ load --exec $HOME/Desktop/mynexpos/expl/sample/ru.xsm
 load --exec $HOME/Desktop/mynexpos/expl/sample/m_merge.xsm
 load --exec $HOME/Desktop/mynexpos/expl/sample/m_sort.xsm
 load --exec $HOME/Desktop/mynexpos/expl/sample/m_store.xsm
-load --exec $HOME/Desktop/mynexpos/expl/sample/test5.xsm
+load --exec $HOME/Desktop/mynexpos/expl/sample/merge.xsm
 load --exhandler $HOME/Desktop/mynexpos/nespl/spl_progs/exception_handler.xsm
 load --library $HOME/Desktop/mynexpos/expl/library.lib
 load --int=timer $HOME/Desktop/mynexpos/nespl/spl_progs/timer_handler.xsm
@@ -39,3 +40,4 @@ load --module 4 $HOME/Desktop/mynexpos/nespl/spl_progs/module_4.xsm
 load --module 5 $HOME/Desktop/mynexpos/nespl/spl_progs/module_5.xsm
 load --module 6 $HOME/Desktop/mynexpos/nespl/spl_progs/module_6.xsm
 load --module 7 $HOME/Desktop/mynexpos/nespl/spl_progs/module_7.xsm
+load --module 8 $HOME/Desktop/mynexpos/nespl/spl_progs/module_8.xsm

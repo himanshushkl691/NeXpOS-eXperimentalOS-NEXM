@@ -8,6 +8,13 @@ loadi(51,64);
 loadi(54,67);
 loadi(55,68);
 
+//load MOD_8
+loadi(132,516);
+loadi(133,517);
+
+//load secondary_boot_loader
+loadi(128,512);
+
 //load idle process
 loadi(69,11);
 
