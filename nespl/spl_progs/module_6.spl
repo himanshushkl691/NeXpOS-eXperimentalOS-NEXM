@@ -191,7 +191,7 @@ if(funcNum == SWAP_IN) then
 		//disk_load() in device manager
 		backup;
 		R1 = DISK_LOAD;
-		R2 = [SYSTEM_STATUS_TABLE + 1];
+		R2 = [SYSTEM_STATUS_TABLE + (5*CORE) + 1];
 		R3 = page;
 		R4 = block;
 		call MOD_4; 

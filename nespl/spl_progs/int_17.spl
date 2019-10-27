@@ -1,10 +1,5 @@
 //-------------------------------------------INTERRUPT 17 MODULE----------------------------------------------
 
-backup;
-R1 = ACQUIRE_KERN_LOCK;
-call MOD_8;
-restore;
-
 //extract info from user stack
 alias currPID R0;
 alias userSP R1;
@@ -24,6 +19,11 @@ unencrypted_pswd = [[PTBR + 2 * ((userSP - 3) / 512)] * 512 + (userSP - 3) % 512
 [process_table + 13] = SP;
 SP = [process_table + 11] * 512 - 1;
 
+backup;
+R1 = ACQUIRE_KERN_LOCK;
+call MOD_8;
+restore;
+
 //-----------------------Login System Call(27)(final)-------------------
 if(sys_call_num == 27) then
 	alias i R7;
@@ -37,12 +37,12 @@ if(sys_call_num == 27) then
 	if(currPID != 1) then
 		[ret] = -2;
 		[process_table + 9] = 0;
-		SP = userSP;
 		backup;
 		R1 = RELEASE_LOCK;
 		R2 = KERN_LOCK;
 		call MOD_8;
 		restore;
+		SP = userSP;
 		ireturn;
 	endif;
 
@@ -63,12 +63,12 @@ if(sys_call_num == 27) then
 	if(user_table_entry == -1) then
 		[ret] = -1;
 		[process_table + 9] = 0;
-		SP = userSP;
 		backup;
 		R1 = RELEASE_LOCK;
 		R2 = KERN_LOCK;
 		call MOD_8;
 		restore;
+		SP = userSP;
 		ireturn;
 	endif;
 
@@ -80,12 +80,12 @@ if(sys_call_num == 27) then
 	if([user_table + 1] != encrypted_pswd) then
 		[ret] = -1;
 		[process_table + 9] = 0;
-		SP = userSP;
 		backup;
 		R1 = RELEASE_LOCK;
 		R2 = KERN_LOCK;
 		call MOD_8;
 		restore;
+		SP = userSP;
 		ireturn;
 	endif;
 
@@ -117,7 +117,6 @@ if(sys_call_num == 27) then
 	//success :)
 	[process_table + 9] = 0;
 	[ret] = 0;
-	SP = userSP;
 endif;
 //----------------------------------------------------------------------
 backup;
@@ -125,5 +124,6 @@ R1 = RELEASE_LOCK;
 R2 = KERN_LOCK;
 call MOD_8;
 restore;
+SP = userSP;
 ireturn;
 //------------------------------------------------------------------------------------------------------------

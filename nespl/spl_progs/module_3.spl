@@ -30,7 +30,7 @@ if(funcNum == OPEN) then
 	//acquire inode by calling acquire_inode() in resource manager
 	backup;
 	R1 = ACQUIRE_INODE;
-	R2 = [SYSTEM_STATUS_TABLE + 1];
+	R2 = [SYSTEM_STATUS_TABLE + (5*CORE) + 1];
 	R3 = inode;
 	call MOD_0;
 	//if locking fails :(
@@ -48,7 +48,7 @@ if(funcNum == OPEN) then
 		//release_inode()
 		backup;
 		R1 = RELEASE_INODE;
-		R2 = [SYSTEM_STATUS_TABLE + 1];
+		R2 = [SYSTEM_STATUS_TABLE + (5*CORE) + 1];
 		R3 = inode;
 		call MOD_0;
 		restore;
@@ -74,7 +74,7 @@ if(funcNum == OPEN) then
 		//release_inode()
 		backup;
 		R1 = RELEASE_INODE;
-		R2 = [SYSTEM_STATUS_TABLE + 1];
+		R2 = [SYSTEM_STATUS_TABLE + (5*CORE) + 1];
 		R3 = inode;
 		call MOD_0;
 		restore;
@@ -105,7 +105,7 @@ if(funcNum == OPEN) then
 	//release_inode()
 	backup;
 	R1 = RELEASE_INODE;
-	R2 = [SYSTEM_STATUS_TABLE + 1];
+	R2 = [SYSTEM_STATUS_TABLE + (5 * CORE) + 1];
 	R3 = inode;
 	call MOD_0;
 	restore;
@@ -163,7 +163,7 @@ if((funcNum == BUFFERED_READ) || (funcNum == BUFFERED_WRITE)) then
 	//acquire_buffer() in resource manager
 	backup;
 	R1 = ACQUIRE_BUFFER;
-	R2 = [SYSTEM_STATUS_TABLE + 1];
+	R2 = [SYSTEM_STATUS_TABLE + (5*CORE) + 1];
 	R3 = buffer_num;
 	call MOD_0;
 	restore;
@@ -174,7 +174,7 @@ if((funcNum == BUFFERED_READ) || (funcNum == BUFFERED_WRITE)) then
 		if([buffer_table + 1] == 1) then
 			backup;
 			R1 = DISK_STORE;
-			R2 = [SYSTEM_STATUS_TABLE + 1];
+			R2 = [SYSTEM_STATUS_TABLE + (5*CORE)+1];
 			R3 = buffer_num + 71;
 			R4 = [buffer_table];
 			call MOD_4;
@@ -188,7 +188,7 @@ if((funcNum == BUFFERED_READ) || (funcNum == BUFFERED_WRITE)) then
 		backup;
 		R1 = DISK_LOAD;			//disk_load()
 		R4 = disk_block_num;		//block number
-		R2 = [SYSTEM_STATUS_TABLE + 1];	//current pid
+		R2 = [SYSTEM_STATUS_TABLE + (5*CORE) + 1];	//current pid
 		R3 = buffer_num + 71;		//page number
 		call MOD_4;
 		restore;
@@ -211,7 +211,7 @@ if((funcNum == BUFFERED_READ) || (funcNum == BUFFERED_WRITE)) then
 	//release_buffer() in resource manager
 	backup;
 	R1 = RELEASE_BUFFER;
-	R2 = [SYSTEM_STATUS_TABLE + 1];
+	R2 = [SYSTEM_STATUS_TABLE + (5*CORE)+1];
 	R3 = buffer_num;
 	call MOD_0;
 	restore;

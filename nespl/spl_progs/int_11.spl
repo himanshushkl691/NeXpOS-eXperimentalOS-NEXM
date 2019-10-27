@@ -1,10 +1,5 @@
 //----------------------------------------INTERRUPT 11 MODULE---------------------------------------
 
-backup;
-R1 = ACQUIRE_KERN_LOCK;
-call MOD_8;
-restore;
-
 //extract system_call number from user stack
 alias sys_call_num R0;
 alias userSP R1;
@@ -15,7 +10,10 @@ sys_call_num = [[PTBR + (2 * ((userSP - 5) / 512))] * 512 + ((userSP - 5) % 512)
 //switch to kernel stack
 [PROCESS_TABLE + (16 * currPID) + 13] = SP;
 SP = [PROCESS_TABLE + (16 * currPID) + 11] * 512 - 1;
-
+backup;
+R1 = ACQUIRE_KERN_LOCK;
+call MOD_8;
+restore;
 //-----------Get PID System Call(11)(final)--------------
 if(sys_call_num == 11) then
 	//set mode flag to system call number
@@ -26,9 +24,6 @@ if(sys_call_num == 11) then
 
 	//reset mode flag to 0 for user mode
 	[PROCESS_TABLE + (currPID * 16) + 9] = 0;
-	
-	//set user stack
-	SP = userSP;
 endif;
 //-------------------------------------------------------
 
@@ -42,7 +37,6 @@ if(sys_call_num == 12) then
 	
 	//reset mode field to 0 for user mode
 	[PROCESS_TABLE + (16 * currPID) + 9] = 0;
-	SP = userSP;
 endif;
 //-------------------------------------------------------
 
@@ -58,12 +52,12 @@ if(sys_call_num == 13) then
 	if((argPID < 0)||(argPID >= 16)||(argPID == currPID)||([PROCESS_TABLE + (16*argPID) + 4] == TERMINATED)) then
 		[ret] = -1;	//return value -1 failure!
 		[PROCESS_TABLE + (16 * currPID) + 9] = 0;				//reset mode flag
-		SP = userSP;
 		backup;
 		R1 = RELEASE_LOCK;
 		R2 = KERN_LOCK;
 		call MOD_8;
 		restore;
+		SP = userSP;
 		ireturn;
 	endif;
 	
@@ -91,9 +85,6 @@ if(sys_call_num == 13) then
 
 	//store return value as 0 for success
 	[ret] = 0;
-	
-	//set user stack
-	SP = userSP;
 endif;
 //-------------------------------------------------------
 
@@ -118,13 +109,15 @@ if(sys_call_num == 14) then
 
 	//set return value as 0 for success
 	[[PTBR + 2 * ((userSP - 1) / 512)] * 512 + ((userSP - 1) % 512)] = 0;
-	SP = userSP;
 endif;
 //-------------------------------------------------------
+
 backup;
 R1 = RELEASE_LOCK;
 R2 = KERN_LOCK;
 call MOD_8;
 restore;
+
+SP = userSP;
 ireturn;
 //--------------------------------------------------------------------------------------------------

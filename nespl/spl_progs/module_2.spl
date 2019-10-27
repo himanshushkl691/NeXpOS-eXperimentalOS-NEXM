@@ -8,7 +8,7 @@ if(funcNum == GET_FREE_PAGE) then
 	[SYSTEM_STATUS_TABLE + 3] = [SYSTEM_STATUS_TABLE + 3] + 1;
 	//wait for memory
 	while ([SYSTEM_STATUS_TABLE + 2] == 0) do
-		[PROCESS_TABLE+([SYSTEM_STATUS_TABLE+1]*16)+4]=WAIT_MEM;
+		[PROCESS_TABLE+([SYSTEM_STATUS_TABLE+(5*CORE)+1]*16)+4]=WAIT_MEM;
 		//call scheduler
 		backup;
 		call MOD_5;
@@ -82,7 +82,7 @@ if(funcNum == GET_CODE_PAGE) then
 	R1 = DISK_LOAD;			//funcNum
 	R3 = R0;			//page number in which block_num content is loaded
 	R4 = block_num;			//block which we want to load
-	R2 = [SYSTEM_STATUS_TABLE + 1];	//pid
+	R2 = [SYSTEM_STATUS_TABLE+(5*CORE)+1];	//pid
 	call MOD_4;			//device manager
 	return;
 endif;

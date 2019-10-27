@@ -10,7 +10,7 @@ if(funcNum == TERMINAL_WRITE) then
 	//-------CALLING ACQUIRE TERMINAL------
 	backup;
 	R1 = ACQUIRE_TERMINAL;	//set R1 to 8 for acquiring terminal
-	R2 = [SYSTEM_STATUS_TABLE + 1];	//set R2 to PID of curr_proc
+	R2 = [SYSTEM_STATUS_TABLE + (5*CORE) + 1];	//set R2 to PID of curr_proc
 	call MOD_0;	//call resource manager module
 	restore;
 	print R3;
@@ -19,7 +19,7 @@ if(funcNum == TERMINAL_WRITE) then
 	//------CALLING RELEASE TERMINAL-----
 	backup;
 	R1 = RELEASE_TERMINAL;	//set R1 to 9 for releasing terminal
-	R2 = [SYSTEM_STATUS_TABLE+1];
+	R2 = [SYSTEM_STATUS_TABLE+(5*CORE)+1];
 	call MOD_0;	//call resource manager module
 	restore;
 	//-----------------------------------
@@ -33,18 +33,18 @@ if(funcNum == TERMINAL_READ) then
 	//------CALLING ACQUIRE TERMINAL-------
 	backup;
 	R1 = ACQUIRE_TERMINAL;
-	R2 = [SYSTEM_STATUS_TABLE + 1];
+	R2 = [SYSTEM_STATUS_TABLE + (5 * CORE) + 1];
 	call MOD_0;
 	restore;
 	read;
-	[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 4] = WAIT_TERMINAL;
+	[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + (5 * CORE) + 1] * 16 + 4] = WAIT_TERMINAL;
 	//-------------------------------------
 
 	//-----CONTEXT SWITCH------------------
 	multipush(R0,R1,R2,R3,R4,R5,R6);
 	call MOD_5;
 	multipop(R0,R1,R2,R3,R4,R5,R6);
-	[[PTBR + 2 * ((R3) / 512)] * 512 + ((R3) % 512)] = [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1] * 16) + 8];
+	[[PTBR + 2 * ((R3) / 512)] * 512 + ((R3) % 512)] = [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + (5 * CORE) + 1] * 16) + 8];
 	//-------------------------------------
 	return;
 endif;

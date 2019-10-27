@@ -1,16 +1,15 @@
 //--------------------------------------------INTERRUPT 9 MODULE--------------------------------------------------
 
-backup;
-R1 = ACQUIRE_KERN_LOCK;
-call MOD_8;
-restore;
-
 //------------------Exec System Call(9)--------------
 //switch to kernel stack of current process
 alias userSP R0;
 userSP = SP;
 [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + (5 * CORE) + 1] * 16) + 13] = SP;
 SP = [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + (5 * CORE) + 1] * 16) + 11] * 512 - 1;
+backup;
+R1 = ACQUIRE_KERN_LOCK;
+call MOD_8;
+restore;
 
 //change mode_flag in current_proc's process_table
 [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + (5 * CORE) + 1] * 16) + 9] = 9;
@@ -37,7 +36,6 @@ while(i < MAX_FILE_NUM) do
 endwhile;
 
 if(idx < 0) then
-	SP = userSP;
 	//set mode_flag
 	[PROCESS_TABLE+([SYSTEM_STATUS_TABLE+(5*CORE)+1]*16)+9]=0;
 	//set ret_val
@@ -47,6 +45,7 @@ if(idx < 0) then
 	R2 = KERN_LOCK;
 	call MOD_8;
 	restore;
+	SP = userSP;
 	ireturn;
 endif;
 
@@ -163,17 +162,16 @@ endwhile;
 
 //------------------------------------
 
-[[PTBR + 16] * 512] = [[PTBR + 8] * 512 + 1];	//store entry location on top of stack
-SP = 8 * 512;					//userSP
-
-[PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + (5 * CORE) + 1]*16) + 9] = 0;		//mode_flag to 0 USER
-PTBR = PAGE_TABLE_BASE + (20 * [SYSTEM_STATUS_TABLE + (5 * CORE) + 1]);
-
 backup;
 R1 = RELEASE_LOCK;
 R2 = KERN_LOCK;
 call MOD_8;
 restore;
+[[PTBR + 16] * 512] = [[PTBR + 8] * 512 + 1];	//store entry location on top of stack
+SP = 8 * 512;					//userSP
+
+[PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + (5 * CORE) + 1]*16) + 9] = 0;		//mode_flag to 0 USER
+PTBR = PAGE_TABLE_BASE + (20 * [SYSTEM_STATUS_TABLE + (5 * CORE) + 1]);
 
 ireturn;
 //------------------------------------

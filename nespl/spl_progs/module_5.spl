@@ -90,21 +90,18 @@ PTLR = [newPT + 15];
 
 if([newPT + 4] == CREATED) then
 	//assign BP of new process as first word from its kernel stack
-	BP = [[newPT + 11] * 512];
-	SP = [newPT + 13];
-	[newPT + 4] = RUNNING;
-	[newPT + 9] = 0;
 	//release_lock() in access lock manager
 	backup;
 	R1 = RELEASE_LOCK;
 	R2 = SCHED_LOCK;
 	call MOD_8;
 	restore;
+	BP = [[newPT + 11] * 512];
+	SP = [newPT + 13];
+	[newPT + 4] = RUNNING;
+	[newPT + 9] = 0;
 	ireturn;
 endif;
-
-[newPT + 4] = RUNNING;
-multipop(BP);
 
 //release_lock() in access lock manager
 backup;
@@ -112,6 +109,9 @@ R1 = RELEASE_LOCK;
 R2 = SCHED_LOCK;
 call MOD_8;
 restore;
+
+[newPT + 4] = RUNNING;
+multipop(BP);
 
 return;
 //-------------------------------------------------------------------------------------------

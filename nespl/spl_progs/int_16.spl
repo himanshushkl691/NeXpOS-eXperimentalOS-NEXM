@@ -1,10 +1,5 @@
 //-------------------------------------INTERRUPT 16 MODULE----------------------------------------
 
-backup;
-R1 = ACQUIRE_KERN_LOCK;
-call MOD_8;
-restore;
-
 //extract info from user stack
 alias currPID R0;
 alias userSP R1;
@@ -21,6 +16,14 @@ username = [[PTBR + 2 * ((userSP - 4) / 512)] * 512 + (userSP - 4) % 512];
 unencrypted_pswd = [[PTBR + 2 * ((userSP - 3) / 512)] * 512 + (userSP - 3) % 512];
 ret = [PTBR + 2 * ((userSP - 1) / 512)] * 512 + (userSP - 1) % 512;
 
+[process_table + 13] = SP;
+SP = [process_table + 11] * 512 - 1;
+
+backup;
+R1 = ACQUIRE_KERN_LOCK;
+call MOD_8;
+restore;
+
 //-------------------------Newusr system call(22)(final)-------------------
 if(sys_call_num == 22) then
 	alias i R8;
@@ -33,12 +36,7 @@ if(sys_call_num == 22) then
 	if(([SYSTEM_STATUS_TABLE] != 1) || (currPID != 2)) then
 		[ret] = -2;
 		[process_table + 9] = 0;
-		backup;
-		R1 = RELEASE_LOCK;
-		R2 = KERN_LOCK;
-		call MOD_8;
-		restore;
-		ireturn;
+		goto label1;
 	endif;
 
 	//search if user already exist
@@ -49,12 +47,7 @@ if(sys_call_num == 22) then
 			//if already existing :(
 			[ret] = -1;
 			[process_table + 9] = 0;
-			backup;
-			R1 = RELEASE_LOCK;
-			R2 = KERN_LOCK;
-			call MOD_8;
-			restore;
-			ireturn;
+			goto label1;
 		endif;
 		if((userid == -1) && ([USER_TABLE + (2 * i)] == -1) && ([USER_TABLE + (2 * i) + 1] == -1)) then
 			userid = i;
@@ -66,12 +59,7 @@ if(sys_call_num == 22) then
 	if(userid == -1) then
 		[ret] = -3;
 		[process_table + 9] = 0;
-		backup;
-		R1 = RELEASE_LOCK;
-		R2 = KERN_LOCK;
-		call MOD_8;
-		restore;
-		ireturn;
+		goto label1;
 	endif;
 
 	//encrypt password
@@ -99,24 +87,14 @@ if(sys_call_num == 23) then
 	if(([SYSTEM_STATUS_TABLE] != 1) || (currPID != 2)) then
 		[ret] = -2;
 		[process_table + 9] = 0;
-		backup;
-		R1 = RELEASE_LOCK;
-		R2 = KERN_LOCK;
-		call MOD_8;
-		restore;
-		ireturn;	
+		goto label1;	
 	endif;
 
 	//if user to be removed is kernel or root :(
 	if((username == "root") || (username == "kernel")) then
 		[ret] = -2;
 		[process_table + 9] = 0;
-		backup;
-		R1 = RELEASE_LOCK;
-		R2 = KERN_LOCK;
-		call MOD_8;
-		restore;
-		ireturn;
+		goto label1;
 	endif;
 
 	//search user table for given username
@@ -134,12 +112,7 @@ if(sys_call_num == 23) then
 	if(userid == -1) then
 		[ret] = -1;
 		[process_table + 9] = 0;
-		backup;
-		R1 = RELEASE_LOCK;
-		R2 = KERN_LOCK;
-		call MOD_8;
-		restore;
-		ireturn;
+		goto label1;
 	endif;
 
 	//loop through root file and check if there is file present on disk for provided username
@@ -151,12 +124,7 @@ if(sys_call_num == 23) then
 			//if file is present undeleted :(
 			[ret] = -3;
 			[process_table + 9] = 0;
-			backup;
-			R1 = RELEASE_LOCK;
-			R2 = KERN_LOCK;
-			call MOD_8;
-			restore;
-			ireturn;
+			goto label1;
 		endif;
 		i = i + 1;
 	endwhile;
@@ -183,12 +151,7 @@ if(sys_call_num == 24) then
 	if(currPID != 2) then
 		[ret] = -1;
 		[process_table + 9] = 0;
-		backup;
-		R1 = RELEASE_LOCK;
-		R2 = KERN_LOCK;
-		call MOD_8;
-		restore;
-		ireturn;
+		goto label1;
 	endif;
 
 	//loop through user table and find entry corresponding to username
@@ -206,12 +169,7 @@ if(sys_call_num == 24) then
 	if(userid == -1) then
 		[ret] = -2;
 		[process_table + 9] = 0;
-		backup;
-		R1 = RELEASE_LOCK;
-		R2 = KERN_LOCK;
-		call MOD_8;
-		restore;
-		ireturn;
+		goto label1;
 	endif;
 
 	//if userid of process is not equal to userid of user and current user is not root
@@ -219,12 +177,7 @@ if(sys_call_num == 24) then
 	if((([process_table + 3] != userid) && ([SYSTEM_STATUS_TABLE] != 1)) || (currPID != 2)) then
 		[ret] = -1;
 		[process_table + 9] = 0;
-		backup;
-		R1 = RELEASE_LOCK;
-		R2 = KERN_LOCK;
-		call MOD_8;
-		restore;
-		ireturn;
+		goto label1;
 	endif;
 
 	//encrypt password
@@ -250,24 +203,14 @@ if(sys_call_num == 25) then
 	if((userid < 0) || (userid > 15)) then
 		[ret] = -1;
 		[process_table + 9] = 0;
-		backup;
-		R1 = RELEASE_LOCK;
-		R2 = KERN_LOCK;
-		call MOD_8;
-		restore;
-		ireturn;
+		goto label1;
 	endif;
 
 	//if entry corresponding to given userid is invalid :(
 	if(([USER_TABLE + (2 * userid)] == -1)) then
 		[ret] = -1;
 		[process_table + 9] = 0;
-		backup;
-		R1 = RELEASE_LOCK;
-		R2 = KERN_LOCK;
-		call MOD_8;
-		restore;
-		ireturn;
+		goto label1;
 	endif;
 
 	//fetch username from user table
@@ -292,12 +235,7 @@ if(sys_call_num == 26) then
 			//success :)
 			[ret] = i;
 			[process_table + 9] = 0;
-			backup;
-			R1 = RELEASE_LOCK;
-			R2 = KERN_LOCK;
-			call MOD_8;
-			restore;
-			ireturn;
+			goto label1;
 		endif;
 		i = i + 1;
 	endwhile;
@@ -307,10 +245,12 @@ if(sys_call_num == 26) then
 	[process_table + 9] = 0;
 endif;
 //-------------------------------------------------------------------------
+label1:
 backup;
 R1 = RELEASE_LOCK;
 R2 = KERN_LOCK;
 call MOD_8;
 restore;
+SP = userSP;
 ireturn;
 //------------------------------------------------------------------------------------------------

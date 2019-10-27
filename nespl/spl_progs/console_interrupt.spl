@@ -13,18 +13,9 @@ process_table_entry = PROCESS_TABLE + 16 * reqPID;
 [process_table_entry + 8] = P0;
 
 backup;
-R1 = ACQUIRE_KERN_LOCK;
-call MOD_8;
-restore;
-backup;
 R1 = 9;
 R2 = reqPID;
 call MOD_0;
-restore;
-backup;
-R1 = RELEASE_LOCK;
-R2 = KERN_LOCK;
-call MOD_8;
 restore;
 
 restore;

@@ -1,10 +1,5 @@
 //---------------------------------------------INTERRUPT 6 MODULE------------------------------------------------------
 
-backup;
-R1 = ACQUIRE_KERN_LOCK;
-call MOD_8;
-restore;
-
 //--------------------Read System Call(7)(final)---------------
 alias currPID R0;
 alias userSP R1;
@@ -23,6 +18,11 @@ ret 			= [PTBR + 2 * ((userSP - 1) / 512)] * 512 + (userSP - 1) % 512;
 [process_table + 13] 	= SP;
 SP 			= [process_table + 11] * 512 - 1;
 
+backup;
+R1 = ACQUIRE_KERN_LOCK;
+call MOD_8;
+restore;
+
 if(file_descriptor == -1) then
 	//read from terminal
 	backup;	
@@ -37,12 +37,12 @@ else
 	if((file_descriptor < 0) || (file_descriptor > 7)) then
 		[ret] = -1;
 		[process_table + 9] = 0;
-		SP = userSP;
 		backup;
 		R1 = RELEASE_LOCK;
 		R2 = KERN_LOCK;
 		call MOD_8;
 		restore;
+		SP = userSP;
 		ireturn;
 	endif;
 	alias resource_table R6;
@@ -52,12 +52,12 @@ else
 	if([resource_table + (2 * file_descriptor)] != FILE) then
 		[ret] = -1;
 		[process_table + 9] = 0;
-		SP = userSP;
 		backup;
 		R1 = RELEASE_LOCK;
 		R2 = KERN_LOCK;
 		call MOD_8;
 		restore;
+		SP = userSP;
 		ireturn;
 	endif;
 
@@ -77,12 +77,12 @@ else
 		restore;
 		[ret] = -1;
 		[process_table + 9] = 0;
-		SP = userSP;
 		backup;
 		R1 = RELEASE_LOCK;
 		R2 = KERN_LOCK;
 		call MOD_8;
 		restore;
+		SP = userSP;
 		ireturn;
 	endif;
 	restore;
@@ -106,12 +106,12 @@ else
 			restore;
 			[ret] = -2;
 			[process_table + 9] = 0;
-			SP = userSP;
 			backup;
 			R1 = RELEASE_LOCK;
 			R2 = KERN_LOCK;
 			call MOD_8;
 			restore;
+			SP = userSP;
 			ireturn;
 		endif;
 
@@ -131,12 +131,12 @@ else
 			restore;
 			[ret] = -2;
 			[process_table + 9] = 0;
-			SP = userSP;
 			backup;
 			R1 = RELEASE_LOCK;
 			R2 = KERN_LOCK;
 			call MOD_8;
 			restore;
+			SP = userSP;
 			ireturn;
 		endif;
 		
@@ -170,12 +170,12 @@ endif;
 //success :)
 [ret] = 0;
 [process_table + 9] = 0;
-SP = userSP;
 backup;
 R1 = RELEASE_LOCK;
 R2 = KERN_LOCK;
 call MOD_8;
 restore;
+SP = userSP;
 ireturn;
 //-------------------------------------------------------------
 //---------------------------------------------------------------------------------------------------------------------

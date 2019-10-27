@@ -1,10 +1,5 @@
 //------------------------------------INTERRUPT 13 MODULE-----------------------------------
 
-backup;
-R1 = ACQUIRE_KERN_LOCK;
-call MOD_8;
-restore;
-
 alias sys_call_num R0;
 alias userSP R1;
 alias currPID R2;
@@ -15,6 +10,10 @@ sys_call_num = [[PTBR + 2 * ((userSP - 5) / 512)] * 512 + ((userSP - 5) % 512)];
 //switch to kernel stack
 [PROCESS_TABLE + (currPID * 16) + 13] = SP;
 SP = [PROCESS_TABLE + (currPID * 16) + 11] * 512 - 1;
+backup;
+R1 = ACQUIRE_KERN_LOCK;
+call MOD_8;
+restore;
 
 //------------Semget System Call(17)(final)-------------
 if(sys_call_num == 17) then
@@ -40,12 +39,12 @@ if(sys_call_num == 17) then
 		//reset mode flag
 		[PROCESS_TABLE + (currPID * 16) + 9] = 0;
 		[[PTBR + 2 * ((userSP - 1) / 512)] * 512 + ((userSP - 1) % 512)] = -1;
-		SP = userSP;
 		backup;
 		R1 = RELEASE_LOCK;
 		R2 = KERN_LOCK;
 		call MOD_8;
 		restore;
+		SP = userSP;
 		ireturn;
 	endif;
 	
@@ -65,12 +64,12 @@ if(sys_call_num == 17) then
 	if(newSemaphore == -1) then
 		[PROCESS_TABLE + (currPID * 16) + 9] = 0;
 		[[PTBR + 2 * ((userSP - 1) / 512)] * 512 + ((userSP - 1) % 512)] = -2;
-		SP = userSP;
 		backup;
 		R1 = RELEASE_LOCK;
 		R2 = KERN_LOCK;
 		call MOD_8;
 		restore;
+		SP = userSP;
 		ireturn;
 	endif;
 	
@@ -98,12 +97,12 @@ if(sys_call_num == 18) then
 	if((semaphoreDescriptor < 0) || (semaphoreDescriptor > 7) || ([userAreaPage * 512 + 496 + 2 * semaphoreDescriptor]!=1))then
 		[[PTBR + 2 * ((userSP - 1) / 512)] * 512 + ((userSP - 1) % 512)] = -1;
 		[PROCESS_TABLE + (currPID * 16) + 9] = 0;
-		SP = userSP;
 		backup;
 		R1 = RELEASE_LOCK;
 		R2 = KERN_LOCK;
 		call MOD_8;
 		restore;
+		SP = userSP;
 		ireturn;		
 	endif;
 
@@ -119,7 +118,6 @@ if(sys_call_num == 18) then
 	[[PTBR + 2 * ((userSP - 1) / 512)] * 512 + ((userSP - 1) % 512)] = 0;
 	
 	[PROCESS_TABLE + (currPID * 16) + 9] = 0;
-	SP = userSP;
 endif;
 //----------------------------------------------------
 
@@ -129,5 +127,6 @@ R2 = KERN_LOCK;
 call MOD_8;
 restore;
 
+SP = userSP;
 ireturn;
 //------------------------------------------------------------------------------------------

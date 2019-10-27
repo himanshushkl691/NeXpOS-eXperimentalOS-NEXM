@@ -7,7 +7,7 @@ if(funcNum == ACQUIRE_KERN_LOCK) then
 	if(CORE == 1) then
 		if(([SYSTEM_STATUS_TABLE + 5] != 0) || ([SYSTEM_STATUS_TABLE + 7] == 1)) then
 			//if secondary core and paging or logout_status is on eXpOS don't permit a process to execute critical code
-			[PROCESS_TABLE + (16 * [SYSTEM_STATUS_TABLE + 1]) + 4] = RUNNING;
+			[PROCESS_TABLE + (16 * [SYSTEM_STATUS_TABLE + (5 * CORE) + 1]) + 4] = READY;
 			backup;
 			call MOD_5;
 			restore;
@@ -46,5 +46,5 @@ if(funcNum == RELEASE_LOCK) then
 	return;
 endif;
 //------------------------------------------------------
-
+return;
 //-----------------------------------------------------------------------------------------------------------------

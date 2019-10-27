@@ -1,10 +1,5 @@
 //-------------------------------------INTERRUPT 15 MODULE---------------------------------------
 
-backup;
-R1 = ACQUIRE_KERN_LOCK;
-call MOD_8;
-restore;
-
 //-----------------Shutdown System Call(21)(final)-----------------
 alias currPID R0;
 alias process_table R1;
@@ -16,18 +11,22 @@ process_table = PROCESS_TABLE + (16 * currPID);
 ret = [PTBR + 2 * ((userSP - 1) / 512)] * 512 + (userSP - 1) % 512;
 [process_table + 13] = SP;
 SP = [process_table + 11] * 512 - 1;
+backup;
+R1 = ACQUIRE_KERN_LOCK;
+call MOD_8;
+restore;
 [process_table + 9] = 21;
 
 //shutdown system call can only be invoked from shell process of root user return -1 if not :(
 if(([SYSTEM_STATUS_TABLE + (5 * CORE) + 1] != 2) || ([process_table + 3] != 1)) then
 	[ret] = -1;
 	[process_table + 9] = 0;
-	SP = userSP;
 	backup;
 	R1 = RELEASE_LOCK;
 	R2 = KERN_LOCK;
 	call MOD_8;
 	restore;
+	SP = userSP;
 	ireturn;
 endif;
 

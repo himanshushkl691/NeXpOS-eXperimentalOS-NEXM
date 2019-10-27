@@ -1,10 +1,5 @@
 //-----------------------------------INTERRUPT 4 MODULE------------------------------------------
 
-backup;
-R1 = ACQUIRE_KERN_LOCK;
-call MOD_8;
-restore;
-
 //extract info from user stack
 alias sys_call_num R0;
 alias userSP R1;
@@ -23,6 +18,11 @@ permission   = [[PTBR + 2 * ((userSP - 3) / 512)] * 512 + ((userSP - 3) % 512)];
 [process_table + 13] = SP;
 SP = [process_table + 11] * 512 - 1;
 
+backup;
+R1 = ACQUIRE_KERN_LOCK;
+call MOD_8;
+restore;
+
 //-----------------Create(1)(final)-----------------------
 if(sys_call_num == 1) then
 	[process_table + 9] = sys_call_num;
@@ -36,12 +36,12 @@ if(sys_call_num == 1) then
 			[[PTBR + 2 * ((userSP - 1) / 512)] * 512 + (userSP - 1) % 512] = 0;
 			//reset MODE flag to user mode
 			[process_table + 9] = 0;
-			SP = userSP;
 			backup;
 			R1 = RELEASE_LOCK;
 			R2 = KERN_LOCK;
 			call MOD_8;
 			restore;
+			SP = userSP;
 			ireturn;
 		endif;
 		i = i + 1;
@@ -61,12 +61,12 @@ if(sys_call_num == 1) then
 		[[PTBR + 2 * ((userSP - 1) / 512)] * 512 + (userSP - 1) % 512] = -1;
 		//reset mode flag to user mode
 		[process_table + 9] = 0;
-		SP = userSP;
 		backup;
 		R1 = RELEASE_LOCK;
 		R2 = KERN_LOCK;
 		call MOD_8;
 		restore;
+		SP = userSP;
 		ireturn;
 	endif;
 
@@ -104,7 +104,6 @@ if(sys_call_num == 1) then
 
 	[process_table + 9] = 0;
 	[[PTBR + 2 * ((userSP - 1) / 512)] * 512 + (userSP - 1) % 512] = 0;
-	SP = userSP;
 endif;
 //------------------------------------------------------
 
@@ -129,12 +128,12 @@ if(sys_call_num == 4) then
 	if(inode_idx == -1) then
 		[ret] = 0;
 		[process_table + 9] = 0;
-		SP = userSP;
 		backup;
 		R1 = RELEASE_LOCK;
 		R2 = KERN_LOCK;
 		call MOD_8;
 		restore;
+		SP = userSP;
 		ireturn;
 	endif;
 
@@ -142,12 +141,12 @@ if(sys_call_num == 4) then
 	if([inode_idx] != DATA) then
 		[ret] = -1;
 		[process_table + 9] = 0;
-		SP = userSP;
 		backup;
 		R1 = RELEASE_LOCK;
 		R2 = KERN_LOCK;
 		call MOD_8;
 		restore;
+		SP = userSP;
 		ireturn;
 	endif;
 
@@ -156,12 +155,12 @@ if(sys_call_num == 4) then
 		if(([process_table + 3] != 1) && ([process_table + 3] != [inode_idx + 3])) then
 			[ret] = -1;
 			[process_table + 9] = 0;
-			SP = userSP;
 			backup;
 			R1 = RELEASE_LOCK;
 			R2 = KERN_LOCK;
 			call MOD_8;
 			restore;
+			SP = userSP;
 			ireturn;
 		endif;
 	endif;
@@ -184,12 +183,12 @@ if(sys_call_num == 4) then
 		restore;
 		[ret] = -2;
 		[process_table + 9] = 0;
-		SP = userSP;
 		backup;
 		R1 = RELEASE_LOCK;
 		R2 = KERN_LOCK;
 		call MOD_8;
 		restore;
+		SP = userSP;
 		ireturn;
 	endif;
 	
@@ -227,7 +226,6 @@ if(sys_call_num == 4) then
 	
 	[ret] = 0;
 	[process_table + 9] = 0;
-	SP = userSP;
 endif;
 //------------------------------------------------------
 backup;
@@ -235,5 +233,6 @@ R1 = RELEASE_LOCK;
 R2 = KERN_LOCK;
 call MOD_8;
 restore;
+SP = userSP;
 ireturn;
 //-----------------------------------------------------------------------------------------------

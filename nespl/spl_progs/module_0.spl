@@ -1,7 +1,6 @@
 //--------------------------------------RESOURCE MANAGER MODULE---------------------------------------------
 alias funcNum R1;
 alias currPID R2;
-
 //------------ACQUIRING TERMINAL------------
 if(funcNum == ACQUIRE_TERMINAL) then
 	

@@ -8,6 +8,7 @@ int main()
 		while(1 == 1) do
 			write("Username");
 			ret = exposcall("Read",-1,username);
+			breakpoint;
 			write("Password");
 			ret = exposcall("Read",-1,password);
 			ret = exposcall("Login",username,password);
