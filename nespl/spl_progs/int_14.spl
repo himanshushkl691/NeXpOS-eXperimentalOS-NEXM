@@ -28,13 +28,13 @@ if(sys_call_num == 19) then
 	//failure if semaphore descriptor is not valid	
 	if((semaphore_descriptor < 0) || (semaphore_descriptor > 7) || ([user_area_page * 512 + 496 + 2 * semaphore_descriptor]!=1))
 then
-		[curr_process_table + 9] = 0;
 		[[PTBR + 2 * ((userSP - 1) / 512)] * 512 + ((userSP - 1) % 512)] = -1;
 		backup;
 		R1 = RELEASE_LOCK;
 		R2 = KERN_LOCK;
 		call MOD_8;
 		restore;
+		[curr_process_table + 9] = 0;
 		SP = userSP;
 		ireturn;
 	endif;
@@ -71,9 +71,6 @@ then
 
 	//return 0 for success in user stack success :)
 	[[PTBR + 2 * ((userSP - 1) / 512)] * 512 + ((userSP - 1) % 512)] = 0;
-
-	//change mode back to user
-	[curr_process_table + 9] = 0;
 endif;
 //---------------------------------------------------------
 
@@ -89,13 +86,13 @@ if(sys_call_num == 20) then
 
 	//failure(invalid)
 	if((semaphore_descriptor<0) || (semaphore_descriptor>7) || ([user_area_page * 512 + 496 + 2*semaphore_descriptor]!=1))then
-		[curr_process_table + 9] = 0;
 		[[PTBR + 2 * ((userSP - 1) / 512)] * 512 + ((userSP - 1) % 512)] = -1;
 		backup;
 		R1 = RELEASE_LOCK;
 		R2 = KERN_LOCK;
 		call MOD_8;
 		restore;
+		[curr_process_table + 9] = 0;
 		SP = userSP;
 		ireturn;
 	endif;
@@ -107,13 +104,13 @@ if(sys_call_num == 20) then
 	if([SEMAPHORE_TABLE + (4 * semid)] != -1) then
 		if([SEMAPHORE_TABLE + (4 * semid)] != currPID) then
 			//if locked by some other process return -2 failure :(
-			[curr_process_table + 9] = 0;
 			[[PTBR + 2 * ((userSP - 1) / 512)] * 512 + ((userSP - 1) % 512)] = -2;
 			backup;
 			R1 = RELEASE_LOCK;
 			R2 = KERN_LOCK;
 			call MOD_8;
 			restore;
+			[curr_process_table + 9] = 0;
 			SP = userSP;
 			ireturn;
 		endif;
@@ -136,8 +133,6 @@ if(sys_call_num == 20) then
 	
 	//return 0 in user stack success :)
 	[[PTBR + 2 * ((userSP - 1) / 512)] * 512 + ((userSP - 1) % 512)] = 0;
-	//reset mode flag back to user
-	[curr_process_table + 9] = 0;
 endif;
 //---------------------------------------------------------
 
@@ -146,7 +141,8 @@ R1 = RELEASE_LOCK;
 R2 = KERN_LOCK;
 call MOD_8;
 restore;
-
+//reset mode flag back to user
+[curr_process_table + 9] = 0;
 SP = userSP;
 ireturn;
 //--------------------------------------------------------------------------------------------

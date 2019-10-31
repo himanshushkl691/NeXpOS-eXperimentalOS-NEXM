@@ -12,7 +12,7 @@ load --exec $HOME/Desktop/mynexpos/expl/sample/ru.xsm
 load --exec $HOME/Desktop/mynexpos/expl/sample/m_merge.xsm
 load --exec $HOME/Desktop/mynexpos/expl/sample/m_sort.xsm
 load --exec $HOME/Desktop/mynexpos/expl/sample/m_store.xsm
-load --exec $HOME/Desktop/mynexpos/expl/sample/merge.xsm
+load --exec $HOME/Desktop/mynexpos/expl/sample/conMS.xsm
 load --exhandler $HOME/Desktop/mynexpos/nespl/spl_progs/exception_handler.xsm
 load --library $HOME/Desktop/mynexpos/expl/library.lib
 load --int=timer $HOME/Desktop/mynexpos/nespl/spl_progs/timer_handler.xsm

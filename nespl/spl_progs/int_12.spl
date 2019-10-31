@@ -25,12 +25,12 @@ if(sys_call_num == 28) then
 	//if current process is not shell currPID != 2
 	if(currPID != 2) then
 		[ret] = -1;
-		[process_table + 9] = 0;
 		backup;
 		R1 = RELEASE_LOCK;
 		R2 = KERN_LOCK;
 		call MOD_8;
 		restore;
+		[process_table + 9] = 0;
 		SP = userSP;
 		ireturn;
 	endif;
@@ -91,8 +91,6 @@ if(sys_call_num == 28) then
 	R1 = ACQUIRE_KERN_LOCK;
 	call MOD_8;
 	restore;
-	
-	[process_table + 9] = 0;
 endif;
 //---------------------------------------------------------------------
 
@@ -101,6 +99,7 @@ R1 = RELEASE_LOCK;
 R2 = KERN_LOCK;
 call MOD_8;
 restore;
+[process_table + 9] = 0;
 SP = userSP;
 ireturn;
 //------------------------------------------------------------------------------------------------------

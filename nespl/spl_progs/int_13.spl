@@ -10,6 +10,7 @@ sys_call_num = [[PTBR + 2 * ((userSP - 5) / 512)] * 512 + ((userSP - 5) % 512)];
 //switch to kernel stack
 [PROCESS_TABLE + (currPID * 16) + 13] = SP;
 SP = [PROCESS_TABLE + (currPID * 16) + 11] * 512 - 1;
+
 backup;
 R1 = ACQUIRE_KERN_LOCK;
 call MOD_8;
@@ -36,14 +37,14 @@ if(sys_call_num == 17) then
 	endwhile;
 	
 	if(freeEntry == -1) then	//FAILURE!
-		//reset mode flag
-		[PROCESS_TABLE + (currPID * 16) + 9] = 0;
 		[[PTBR + 2 * ((userSP - 1) / 512)] * 512 + ((userSP - 1) % 512)] = -1;
 		backup;
 		R1 = RELEASE_LOCK;
 		R2 = KERN_LOCK;
 		call MOD_8;
 		restore;
+		//reset mode flag
+		[PROCESS_TABLE + (currPID * 16) + 9] = 0;
 		SP = userSP;
 		ireturn;
 	endif;
@@ -62,13 +63,13 @@ if(sys_call_num == 17) then
 
 	//if there are no free semaphore!
 	if(newSemaphore == -1) then
-		[PROCESS_TABLE + (currPID * 16) + 9] = 0;
 		[[PTBR + 2 * ((userSP - 1) / 512)] * 512 + ((userSP - 1) % 512)] = -2;
 		backup;
 		R1 = RELEASE_LOCK;
 		R2 = KERN_LOCK;
 		call MOD_8;
 		restore;
+		[PROCESS_TABLE + (currPID * 16) + 9] = 0;
 		SP = userSP;
 		ireturn;
 	endif;
@@ -78,7 +79,6 @@ if(sys_call_num == 17) then
 	[userAreaPage * 512 + freeEntry] = SEMAPHORE;
 	
 	SP = userSP;
-	[PROCESS_TABLE + (currPID * 16) + 9] = 0;
 	
 	//set return value as per-process resource table entry index
 	[[PTBR + 2 * ((userSP - 1) / 512)] * 512 + ((userSP - 1) % 512)] = (freeEntry - 496) / 2;
@@ -96,12 +96,12 @@ if(sys_call_num == 18) then
 	
 	if((semaphoreDescriptor < 0) || (semaphoreDescriptor > 7) || ([userAreaPage * 512 + 496 + 2 * semaphoreDescriptor]!=1))then
 		[[PTBR + 2 * ((userSP - 1) / 512)] * 512 + ((userSP - 1) % 512)] = -1;
-		[PROCESS_TABLE + (currPID * 16) + 9] = 0;
 		backup;
 		R1 = RELEASE_LOCK;
 		R2 = KERN_LOCK;
 		call MOD_8;
 		restore;
+		[PROCESS_TABLE + (currPID * 16) + 9] = 0;
 		SP = userSP;
 		ireturn;		
 	endif;
@@ -116,8 +116,6 @@ if(sys_call_num == 18) then
 	[userAreaPage * 512 + 2 * semaphoreDescriptor + 496] = -1;
 	//return value
 	[[PTBR + 2 * ((userSP - 1) / 512)] * 512 + ((userSP - 1) % 512)] = 0;
-	
-	[PROCESS_TABLE + (currPID * 16) + 9] = 0;
 endif;
 //----------------------------------------------------
 
@@ -126,7 +124,7 @@ R1 = RELEASE_LOCK;
 R2 = KERN_LOCK;
 call MOD_8;
 restore;
-
+[PROCESS_TABLE + (currPID * 16) + 9] = 0;
 SP = userSP;
 ireturn;
 //------------------------------------------------------------------------------------------

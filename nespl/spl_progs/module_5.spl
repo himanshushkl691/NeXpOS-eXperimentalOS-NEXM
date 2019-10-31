@@ -44,7 +44,7 @@ if(CORE == 0) then
 			while(tempPID < 14) do
 				alias temp R4;
 				temp = PROCESS_TABLE + (tempPID * 16);
-				if(((([temp + 4] == READY) || ([temp + 4] == CREATED)) && ([temp + 6] == 0)) && (tempPID != [SYSTEM_STATUS_TABLE+6])) then
+				if(((([temp + 4] == READY) || ([temp + 4] == CREATED))) && ([temp + 6] == 0) && (tempPID != [SYSTEM_STATUS_TABLE+6])) then
 					newPID=tempPID;
 					break;
 				endif;
@@ -67,7 +67,7 @@ else
 		while(tempPID < 15) do
 			alias temp R4;
 			temp = PROCESS_TABLE + (tempPID * 16);
-			if(((([temp + 4] == READY) || ([temp + 4] == CREATED)) && ([temp + 6] == 0)) && (tempPID != [SYSTEM_STATUS_TABLE + 1]) && (tempPID != 0) && (tempPID != 1) && (tempPID != 2)) then
+			if(((([temp + 4] == READY) || ([temp + 4] == CREATED))) && ([temp + 6] == 0) && (tempPID != [SYSTEM_STATUS_TABLE + 1]) && (tempPID != 0) && (tempPID != 1) && (tempPID != 2)) then
 				newPID = tempPID;
 				break;
 			endif;

@@ -36,8 +36,6 @@ while(i < MAX_FILE_NUM) do
 endwhile;
 
 if(idx < 0) then
-	//set mode_flag
-	[PROCESS_TABLE+([SYSTEM_STATUS_TABLE+(5*CORE)+1]*16)+9]=0;
 	//set ret_val
 	[[PTBR+2*((userSP - 1)/512)]*512 + ((userSP - 1)%512)] = -1;
 	backup;
@@ -45,6 +43,8 @@ if(idx < 0) then
 	R2 = KERN_LOCK;
 	call MOD_8;
 	restore;
+	//set mode_flag
+	[PROCESS_TABLE+([SYSTEM_STATUS_TABLE+(5*CORE)+1]*16)+9]=0;
 	SP = userSP;
 	ireturn;
 endif;

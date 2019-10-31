@@ -139,9 +139,9 @@ int main()
     //Storing values in descending order
     head=null;
     counter=0;
-    while(counter<128) do
+    while(counter<64) do
       p=alloc();
-      p.data=128-counter;
+      p.data=64-counter;
       p.next=null;
 
       if(head==null) then

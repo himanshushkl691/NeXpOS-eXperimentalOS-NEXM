@@ -34,13 +34,13 @@ if(sys_call_num == 1) then
 			//file already in system :)
 			//return 0 success
 			[[PTBR + 2 * ((userSP - 1) / 512)] * 512 + (userSP - 1) % 512] = 0;
-			//reset MODE flag to user mode
-			[process_table + 9] = 0;
 			backup;
 			R1 = RELEASE_LOCK;
 			R2 = KERN_LOCK;
 			call MOD_8;
 			restore;
+			//reset MODE flag to user mode
+			[process_table + 9] = 0;
 			SP = userSP;
 			ireturn;
 		endif;
@@ -59,13 +59,13 @@ if(sys_call_num == 1) then
 		//no free inode entry found :(
 		//return -1
 		[[PTBR + 2 * ((userSP - 1) / 512)] * 512 + (userSP - 1) % 512] = -1;
-		//reset mode flag to user mode
-		[process_table + 9] = 0;
 		backup;
 		R1 = RELEASE_LOCK;
 		R2 = KERN_LOCK;
 		call MOD_8;
 		restore;
+		//reset mode flag to user mode
+		[process_table + 9] = 0;
 		SP = userSP;
 		ireturn;
 	endif;
@@ -102,7 +102,6 @@ if(sys_call_num == 1) then
 	//permission
 	[i + 4] = permission;
 
-	[process_table + 9] = 0;
 	[[PTBR + 2 * ((userSP - 1) / 512)] * 512 + (userSP - 1) % 512] = 0;
 endif;
 //------------------------------------------------------
@@ -127,12 +126,12 @@ if(sys_call_num == 4) then
 	//file not present :)
 	if(inode_idx == -1) then
 		[ret] = 0;
-		[process_table + 9] = 0;
 		backup;
 		R1 = RELEASE_LOCK;
 		R2 = KERN_LOCK;
 		call MOD_8;
 		restore;
+		[process_table + 9] = 0;
 		SP = userSP;
 		ireturn;
 	endif;
@@ -140,12 +139,12 @@ if(sys_call_num == 4) then
 	//file not DATA :(
 	if([inode_idx] != DATA) then
 		[ret] = -1;
-		[process_table + 9] = 0;
 		backup;
 		R1 = RELEASE_LOCK;
 		R2 = KERN_LOCK;
 		call MOD_8;
 		restore;
+		[process_table + 9] = 0;
 		SP = userSP;
 		ireturn;
 	endif;
@@ -154,12 +153,12 @@ if(sys_call_num == 4) then
 	if([inode_idx + 4] == 0) then
 		if(([process_table + 3] != 1) && ([process_table + 3] != [inode_idx + 3])) then
 			[ret] = -1;
-			[process_table + 9] = 0;
 			backup;
 			R1 = RELEASE_LOCK;
 			R2 = KERN_LOCK;
 			call MOD_8;
 			restore;
+			[process_table + 9] = 0;
 			SP = userSP;
 			ireturn;
 		endif;
@@ -182,12 +181,12 @@ if(sys_call_num == 4) then
 		call MOD_0;
 		restore;
 		[ret] = -2;
-		[process_table + 9] = 0;
 		backup;
 		R1 = RELEASE_LOCK;
 		R2 = KERN_LOCK;
 		call MOD_8;
 		restore;
+		[process_table + 9] = 0;
 		SP = userSP;
 		ireturn;
 	endif;
@@ -199,13 +198,13 @@ if(sys_call_num == 4) then
 			buffer = BUFFER_TABLE + (4 * ([inode_idx + i] % MAX_BUFFER));
 			if(([buffer] == [inode_idx + i]) && ([buffer + 1] == 1)) then
 				[buffer + 1] = 0;	//reset dirty bit
-				backup;
-				R1 = 4;			//release block
-				R3 = currPID;		//current PID
-				R2 = [inode_idx + i];	//block number
-				call MOD_2;
-				restore;
 			endif;
+			backup;
+			R1 = 4;			//release block
+			R3 = currPID;		//current PID
+			R2 = [inode_idx + i];	//block number
+			call MOD_2;
+			restore;
 		endif;
 		i = i + 1;
 	endwhile;
@@ -225,7 +224,6 @@ if(sys_call_num == 4) then
 	restore;
 	
 	[ret] = 0;
-	[process_table + 9] = 0;
 endif;
 //------------------------------------------------------
 backup;
@@ -233,6 +231,7 @@ R1 = RELEASE_LOCK;
 R2 = KERN_LOCK;
 call MOD_8;
 restore;
+[process_table + 9] = 0;
 SP = userSP;
 ireturn;
 //-----------------------------------------------------------------------------------------------

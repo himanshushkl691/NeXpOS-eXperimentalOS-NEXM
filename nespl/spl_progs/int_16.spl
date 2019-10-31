@@ -35,7 +35,6 @@ if(sys_call_num == 22) then
 	//if current user is not root or or if current process is not shell :(
 	if(([SYSTEM_STATUS_TABLE] != 1) || (currPID != 2)) then
 		[ret] = -2;
-		[process_table + 9] = 0;
 		goto label1;
 	endif;
 
@@ -46,7 +45,6 @@ if(sys_call_num == 22) then
 		if([USER_TABLE + (2 * i)] == username) then
 			//if already existing :(
 			[ret] = -1;
-			[process_table + 9] = 0;
 			goto label1;
 		endif;
 		if((userid == -1) && ([USER_TABLE + (2 * i)] == -1) && ([USER_TABLE + (2 * i) + 1] == -1)) then
@@ -58,7 +56,6 @@ if(sys_call_num == 22) then
 	//if no free entry is found, max user reached :(
 	if(userid == -1) then
 		[ret] = -3;
-		[process_table + 9] = 0;
 		goto label1;
 	endif;
 
@@ -72,7 +69,6 @@ if(sys_call_num == 22) then
 
 	//success :)
 	[ret] = 0;
-	[process_table + 9] = 0;
 endif;
 //-------------------------------------------------------------------------
 
@@ -86,14 +82,12 @@ if(sys_call_num == 23) then
 	//if current user is not root or current process is not shell :(
 	if(([SYSTEM_STATUS_TABLE] != 1) || (currPID != 2)) then
 		[ret] = -2;
-		[process_table + 9] = 0;
 		goto label1;	
 	endif;
 
 	//if user to be removed is kernel or root :(
 	if((username == "root") || (username == "kernel")) then
 		[ret] = -2;
-		[process_table + 9] = 0;
 		goto label1;
 	endif;
 
@@ -111,7 +105,6 @@ if(sys_call_num == 23) then
 	//if entry not found :(
 	if(userid == -1) then
 		[ret] = -1;
-		[process_table + 9] = 0;
 		goto label1;
 	endif;
 
@@ -123,7 +116,6 @@ if(sys_call_num == 23) then
 		if(([root_file + 3] == username) && ([root_file] != -1)) then
 			//if file is present undeleted :(
 			[ret] = -3;
-			[process_table + 9] = 0;
 			goto label1;
 		endif;
 		i = i + 1;
@@ -135,7 +127,6 @@ if(sys_call_num == 23) then
 
 	//success :)
 	[ret] = 0;
-	[process_table + 9] = 0;
 endif;
 //-------------------------------------------------------------------------
 
@@ -150,7 +141,6 @@ if(sys_call_num == 24) then
 	//if current process is not shell :(
 	if(currPID != 2) then
 		[ret] = -1;
-		[process_table + 9] = 0;
 		goto label1;
 	endif;
 
@@ -168,7 +158,6 @@ if(sys_call_num == 24) then
 	//if entry not found :(
 	if(userid == -1) then
 		[ret] = -2;
-		[process_table + 9] = 0;
 		goto label1;
 	endif;
 
@@ -176,7 +165,6 @@ if(sys_call_num == 24) then
 	//or current process is not shell :(
 	if((([process_table + 3] != userid) && ([SYSTEM_STATUS_TABLE] != 1)) || (currPID != 2)) then
 		[ret] = -1;
-		[process_table + 9] = 0;
 		goto label1;
 	endif;
 
@@ -188,7 +176,6 @@ if(sys_call_num == 24) then
 	[USER_TABLE + (2 * userid) + 1] = encrypted_pswd;
 
 	//success :)
-	[process_table + 9] = 0;
 	[ret] = 0;
 endif;
 //-------------------------------------------------------------------------
@@ -202,14 +189,12 @@ if(sys_call_num == 25) then
 	
 	if((userid < 0) || (userid > 15)) then
 		[ret] = -1;
-		[process_table + 9] = 0;
 		goto label1;
 	endif;
 
 	//if entry corresponding to given userid is invalid :(
 	if(([USER_TABLE + (2 * userid)] == -1)) then
 		[ret] = -1;
-		[process_table + 9] = 0;
 		goto label1;
 	endif;
 
@@ -217,7 +202,6 @@ if(sys_call_num == 25) then
 	username = [USER_TABLE + (2 * userid)];
 
 	//success :)
-	[process_table + 9] = 0;
 	[ret] = username;
 endif;
 //-------------------------------------------------------------------------
@@ -234,7 +218,6 @@ if(sys_call_num == 26) then
 		if([USER_TABLE + (2 * i)] == username) then
 			//success :)
 			[ret] = i;
-			[process_table + 9] = 0;
 			goto label1;
 		endif;
 		i = i + 1;
@@ -242,7 +225,6 @@ if(sys_call_num == 26) then
 
 	//failure :(
 	[ret] = -1;
-	[process_table + 9] = 0;
 endif;
 //-------------------------------------------------------------------------
 label1:
@@ -251,6 +233,7 @@ R1 = RELEASE_LOCK;
 R2 = KERN_LOCK;
 call MOD_8;
 restore;
+[process_table + 9] = 0;
 SP = userSP;
 ireturn;
 //------------------------------------------------------------------------------------------------

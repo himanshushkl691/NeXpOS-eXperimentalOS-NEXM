@@ -36,12 +36,12 @@ if(sys_call_num == 27) then
 	//if currPID is not 1, means process is not login process :(
 	if(currPID != 1) then
 		[ret] = -2;
-		[process_table + 9] = 0;
 		backup;
 		R1 = RELEASE_LOCK;
 		R2 = KERN_LOCK;
 		call MOD_8;
 		restore;
+		[process_table + 9] = 0;
 		SP = userSP;
 		ireturn;
 	endif;
@@ -62,12 +62,12 @@ if(sys_call_num == 27) then
 	//if entry does not exist :(
 	if(user_table_entry == -1) then
 		[ret] = -1;
-		[process_table + 9] = 0;
 		backup;
 		R1 = RELEASE_LOCK;
 		R2 = KERN_LOCK;
 		call MOD_8;
 		restore;
+		[process_table + 9] = 0;
 		SP = userSP;
 		ireturn;
 	endif;
@@ -79,12 +79,12 @@ if(sys_call_num == 27) then
 	//check if encrypted password match input password, if not return -1 :(
 	if([user_table + 1] != encrypted_pswd) then
 		[ret] = -1;
-		[process_table + 9] = 0;
 		backup;
 		R1 = RELEASE_LOCK;
 		R2 = KERN_LOCK;
 		call MOD_8;
 		restore;
+		[process_table + 9] = 0;
 		SP = userSP;
 		ireturn;
 	endif;
@@ -115,7 +115,6 @@ if(sys_call_num == 27) then
 	restore;
 
 	//success :)
-	[process_table + 9] = 0;
 	[ret] = 0;
 endif;
 //----------------------------------------------------------------------
@@ -124,6 +123,7 @@ R1 = RELEASE_LOCK;
 R2 = KERN_LOCK;
 call MOD_8;
 restore;
+[process_table + 9] = 0;
 SP = userSP;
 ireturn;
 //------------------------------------------------------------------------------------------------------------

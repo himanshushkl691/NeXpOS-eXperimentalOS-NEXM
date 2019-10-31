@@ -20,12 +20,12 @@ restore;
 //shutdown system call can only be invoked from shell process of root user return -1 if not :(
 if(([SYSTEM_STATUS_TABLE + (5 * CORE) + 1] != 2) || ([process_table + 3] != 1)) then
 	[ret] = -1;
-	[process_table + 9] = 0;
 	backup;
 	R1 = RELEASE_LOCK;
 	R2 = KERN_LOCK;
 	call MOD_8;
 	restore;
+	[process_table + 9] = 0;
 	SP = userSP;
 	ireturn;
 endif;

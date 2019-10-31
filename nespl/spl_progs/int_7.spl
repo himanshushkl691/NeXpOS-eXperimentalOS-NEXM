@@ -37,12 +37,12 @@ else
 	//if file descriptor is invalid
 	if((file_descriptor < 0) || (file_descriptor > 7)) then
 		[ret] = -1;
-		[process_table + 9] = 0;
 		backup;
 		R1 = RELEASE_LOCK;
 		R2 = KERN_LOCK;
 		call MOD_8;
 		restore;
+		[process_table + 9] = 0;
 		SP = userSP;
 		ireturn;
 	endif;
@@ -53,12 +53,12 @@ else
 	//if identifier is not FILE, no file associated with this file descriptor :(
 	if([resource_table + (2 * file_descriptor)] != FILE) then
 		[ret] = -1;
-		[process_table + 9] = 0;
 		backup;
 		R1 = RELEASE_LOCK;
 		R2 = KERN_LOCK;
 		call MOD_8;
 		restore;
+		[process_table + 9] = 0;
 		SP = userSP;
 		ireturn;
 	endif;
@@ -78,12 +78,12 @@ else
 		if([inode_table + 3] != [process_table + 3]) then
 			if([inode_table + 4] == EXCLUSIVE) then
 				[ret] = -3;
-				[process_table + 9] = 0;
 				backup;
 				R1 = RELEASE_LOCK;
 				R2 = KERN_LOCK;
 				call MOD_8;
 				restore;
+				[process_table + 9] = 0;
 				SP = userSP;
 				ireturn;
 			endif;
@@ -100,12 +100,12 @@ else
 	if(R0 == -1) then
 		restore;
 		[ret] = -1;
-		[process_table + 9] = 0;
 		backup;
 		R1 = RELEASE_LOCK;
 		R2 = KERN_LOCK;
 		call MOD_8;
 		restore;
+		[process_table + 9] = 0;
 		SP = userSP;
 		ireturn;
 	endif;
@@ -124,12 +124,12 @@ else
 		call MOD_0;
 		restore;
 		[ret] = -2;
-		[process_table + 9] = 0;
 		backup;
 		R1 = RELEASE_LOCK;
 		R2 = KERN_LOCK;
 		call MOD_8;
 		restore;
+		[process_table + 9] = 0;
 		SP = userSP;
 		ireturn;
 	endif;
@@ -157,12 +157,12 @@ else
 			call MOD_0;
 			restore;	
 			[ret] = -2;
-			[process_table + 9] = 0;
 			backup;
 			R1 = RELEASE_LOCK;
 			R2 = KERN_LOCK;
 			call MOD_8;
 			restore;
+			[process_table + 9] = 0;
 			SP = userSP;
 			ireturn;
 		endif;
@@ -209,12 +209,12 @@ endif;
 
 //success :)
 [ret] = 0;
-[process_table + 9] = 0;
 backup;
 R1 = RELEASE_LOCK;
 R2 = KERN_LOCK;
 call MOD_8;
 restore;
+[process_table + 9] = 0;
 SP = userSP;
 ireturn;
 //-----------------------------------------------------------------------------

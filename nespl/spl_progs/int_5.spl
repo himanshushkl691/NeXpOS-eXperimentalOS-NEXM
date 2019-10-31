@@ -14,6 +14,8 @@ sys_call_num = [[PTBR + 2 * ((userSP - 5) / 512)] * 512 + (userSP - 5) % 512];
 [process_table + 13] = SP;
 SP = [process_table + 11] * 512 - 1;
 
+[process_table + 9] = sys_call_num;
+
 backup;
 R1 = ACQUIRE_KERN_LOCK;
 call MOD_8;
@@ -28,8 +30,6 @@ if(sys_call_num == 2) then
 
 	resource_table = [process_table + 11] * 512 + 496;
 	filename = [[PTBR + 2 * ((userSP - 4) / 512)] * 512 + (userSP - 4) % 512];
-	[process_table + 9] = sys_call_num;
-
 	//find free per-process resource index
 	i = 0;
 	while(i < 8) do
@@ -42,12 +42,12 @@ if(sys_call_num == 2) then
 	//if no entry return -3 :(
 	if(i == 8) then
 		[ret] = -3;
-		[process_table + 9] = 0;
 		backup;
 		R1 = RELEASE_LOCK;
 		R2 = KERN_LOCK;
 		call MOD_8;
 		restore;
+		[process_table + 9] = 0;
 		SP = userSP;
 		ireturn;
 	endif;
@@ -63,12 +63,12 @@ if(sys_call_num == 2) then
 	//if file not found or file is not data or root file :(
 	if(open_file_entry == -1) then
 		[ret] = -1;
-		[process_table + 9] = 0;
 		backup;
 		R1 = RELEASE_LOCK;
 		R2 = KERN_LOCK;
 		call MOD_8;
 		restore;
+		[process_table + 9] = 0;
 		SP = userSP;
 		ireturn;
 	endif;
@@ -76,12 +76,12 @@ if(sys_call_num == 2) then
 	//if system has reached its limit of open files :(
 	if(open_file_entry == -2) then
 		[ret] = -2;
-		[process_table + 9] = 0;
 		backup;
 		R1 = RELEASE_LOCK;
 		R2 = KERN_LOCK;
 		call MOD_8;
 		restore;
+		[process_table + 9] = 0;
 		SP = userSP;
 		ireturn;
 	endif;
@@ -110,12 +110,12 @@ if(sys_call_num == 3) then
 	//if file descriptor is invalid :(
 	if((file_descriptor < 0) || (file_descriptor > 7)) then
 		[ret] = -1;
-		[process_table + 9] = 0;
 		backup;
 		R1 = RELEASE_LOCK;
 		R2 = KERN_LOCK;
 		call MOD_8;
 		restore;
+		[process_table + 9] = 0;
 		SP = userSP;
 		ireturn;
 	endif;
@@ -123,12 +123,12 @@ if(sys_call_num == 3) then
 	//if file_descriptor does not belong to file :(
 	if(([resource_table + (2 * file_descriptor)] != FILE) || ([resource_table + (2 * file_descriptor)] == -1)) then
 		[ret] = -1;
-		[process_table + 9] = 0;
 		backup;
 		R1 = RELEASE_LOCK;
 		R2 = KERN_LOCK;
 		call MOD_8;
 		restore;
+		[process_table + 9] = 0;
 		SP = userSP;
 		ireturn;
 	endif;
@@ -149,7 +149,6 @@ if(sys_call_num == 3) then
 
 	//success :)
 	[ret] = 0;
-	[process_table + 9] = 0;
 endif;
 //-------------------------------------------------------------
 
@@ -174,12 +173,12 @@ if(sys_call_num == 6) then
 	//file descriptor is invalid :(
 	if((file_descriptor < 0) || (file_descriptor > 7)) then
 		[ret] = -1;
-		[process_table + 9] = 0;
 		backup;
 		R1 = RELEASE_LOCK;
 		R2 = KERN_LOCK;
 		call MOD_8;
 		restore;
+		[process_table + 9] = 0;
 		SP = userSP;
 		ireturn;
 	endif;
@@ -187,12 +186,12 @@ if(sys_call_num == 6) then
 	//identifier is not FILE :(
 	if([resource_table + (2 * file_descriptor)] != FILE) then
 		[ret] = -1;
-		[process_table + 9] = 0;
 		backup;
 		R1 = RELEASE_LOCK;
 		R2 = KERN_LOCK;
 		call MOD_8;
 		restore;
+		[process_table + 9] = 0;
 		SP = userSP;
 		ireturn;
 	endif;
@@ -212,12 +211,12 @@ if(sys_call_num == 6) then
 	if(R0 == -1) then
 		restore;
 		[ret] = -1;
-		[process_table + 9] = 0;
 		backup;
 		R1 = RELEASE_LOCK;
 		R2 = KERN_LOCK;
 		call MOD_8;
 		restore;
+		[process_table + 9] = 0;
 		SP = userSP;
 		ireturn;
 	endif;
@@ -241,12 +240,12 @@ if(sys_call_num == 6) then
 		call MOD_0;
 		restore;
 		[ret] = -2;
-		[process_table + 9] = 0;
 		backup;
 		R1 = RELEASE_LOCK;
 		R2 = KERN_LOCK;
 		call MOD_8;
 		restore;	
+		[process_table + 9] = 0;
 		SP = userSP;
 		ireturn;
 	endif;
@@ -275,7 +274,6 @@ if(sys_call_num == 6) then
 	
 	//success :)
 	[ret] = 0;
-	[process_table + 9] = 0;
 endif;
 //-------------------------------------------------------------
 backup;
@@ -283,6 +281,7 @@ R1 = RELEASE_LOCK;
 R2 = KERN_LOCK;
 call MOD_8;
 restore;
+[process_table + 9] = 0;
 SP = userSP;
 ireturn;
 //------------------------------------------------------------------------------------------------------
