@@ -21,13 +21,45 @@ if(funcNum == ACQUIRE_KERN_LOCK) then
 endif;
 //------------------------------------------------------
 
-//----------Acquire Scheduler Lock(final)---------------
+//----------Acquire Scheduler Lock-TSL(final)-----------
 if(funcNum == ACQUIRE_SCHED_LOCK) then
 	while(tsl(SCHED_LOCK) == 1) do
 		continue;
 	endwhile;
 	return;
 endif;
+//------------------------------------------------------
+
+//-------Acquire Scheduler Lock-Peterson(final)---------
+//if(funcNum == ACQUIRE_SCHED_LOCK) then
+	//[143 * 512] denotes flag[0]
+	//[143 * 512 + 1] denotes flag[1]
+	//[143 * 512 + 2] denotes interest
+	//if(R2 == 0) then
+		//[143 * 512] = 1;	//flag[0]
+		//[143 * 512 + 2] = 1;	//interest
+		//while(([143 * 512 + 1] == 1) && ([143 * 512 + 2] == 1)) do
+			//continue;
+		//endwhile;
+	//else
+		//[143 * 512 + 2] = 0;	//interest
+		//[143 * 512 + 1] = 1;	//flag[1]
+		//while(([143 * 512] == 1) && ([143 * 512 + 2] == 0)) do
+			//continue;
+		//endwhile;
+	//endif;
+//endif;
+//------------------------------------------------------
+
+//---------Release Scheduler Lock-Peterson(final)-------
+//if(funcNum == 10) then
+	//if(R2 == 0) then
+		//[143 * 512] = 0;
+	//else
+		//[143 * 512 + 1] = 0;
+	//endif;
+	//return;
+//endif;
 //------------------------------------------------------
 
 //--------------Acquire GLOCK(final)--------------------
