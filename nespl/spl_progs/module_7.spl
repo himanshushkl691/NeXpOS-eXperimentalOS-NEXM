@@ -133,7 +133,7 @@ endwhile;
 //initialize memory free list
 i = 0;
 cnt = 0;
-while(i < NUM_MEM_PAGES) do
+while(i < 128) do
 	if(i < 85) then
 		[MEMORY_FREE_LIST + i] = 1;
 	else
