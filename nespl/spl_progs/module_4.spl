@@ -41,9 +41,18 @@ if(funcNum == TERMINAL_READ) then
 	//-------------------------------------
 
 	//-----CONTEXT SWITCH------------------
+	backup;
+	R1 = RELEASE_LOCK;
+	R2 = KERN_LOCK;
+	call MOD_8;
+	restore;
 	multipush(R0,R1,R2,R3,R4,R5,R6);
 	call MOD_5;
 	multipop(R0,R1,R2,R3,R4,R5,R6);
+	backup;
+	R1 = ACQUIRE_KERN_LOCK;
+	call MOD_8;
+	restore;
 	[[PTBR + 2 * ((R3) / 512)] * 512 + ((R3) % 512)] = [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + (5 * CORE) + 1] * 16) + 8];
 	//-------------------------------------
 	return;
@@ -65,7 +74,16 @@ if (funcNum == DISK_LOAD) then
 	load(page_number,block_number);
 	[PROCESS_TABLE + (currPID*16) + 4] = WAIT_DISK;
 	backup;
+	R1 = RELEASE_LOCK;
+	R2 = KERN_LOCK;
+	call MOD_8;
+	restore;
+	backup;
 	call MOD_5;
+	restore;
+	backup;
+	R1 = ACQUIRE_KERN_LOCK;
+	call MOD_8;
 	restore;
 	return;
 endif;
@@ -86,7 +104,16 @@ if(funcNum == DISK_STORE) then
 	store(page_number,block_number);
 	[PROCESS_TABLE + (currPID*16) + 4] = WAIT_DISK;
 	backup;
+	R1 = RELEASE_LOCK;
+	R2 = KERN_LOCK;
+	call MOD_8;
+	restore;
+	backup;
 	call MOD_5;
+	restore;
+	backup;
+	R1 = ACQUIRE_KERN_LOCK;
+	call MOD_8;
 	restore;
 	return;
 endif;

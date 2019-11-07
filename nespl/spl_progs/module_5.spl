@@ -6,8 +6,6 @@ R1 = ACQUIRE_SCHED_LOCK;
 R2 = CORE;
 call MOD_8;
 restore;
-print "insched";
-print CORE;
 alias current_pid R0;
 alias process_table_entry R1;
 alias newPID R2;
@@ -99,8 +97,6 @@ if([newPT + 4] == CREATED) then
 	R2 = CORE;
 	call MOD_8;
 	restore;
-	print "outsched";
-	print CORE;
 	BP = [[newPT + 11] * 512];
 	SP = [newPT + 13];
 	[newPT + 4] = RUNNING;
@@ -114,8 +110,6 @@ R1 = 10;
 R2 = CORE;
 call MOD_8;
 restore;
-print "outsched";
-print CORE;
 [newPT + 4] = RUNNING;
 multipop(BP);
 

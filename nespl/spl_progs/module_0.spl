@@ -8,7 +8,16 @@ if(funcNum == ACQUIRE_TERMINAL) then
 	while(([TERMINAL_STATUS_TABLE]) == 1) do
 		[PROCESS_TABLE+(currPID*16)+4]=WAIT_TERMINAL;
 		backup;
+		R1 = RELEASE_LOCK;
+		R2 = KERN_LOCK;
+		call MOD_8;
+		restore;
+		backup;
 		call MOD_5;			//call scheduler
+		restore;
+		backup;
+		R1 = ACQUIRE_KERN_LOCK;
+		call MOD_8;
 		restore;
 	endwhile;
 	//------------------------------------------
@@ -46,7 +55,16 @@ if(funcNum == ACQUIRE_DISK) then
 	while ([DISK_STATUS_TABLE] == 1) do
 		[PROCESS_TABLE + (currPID * 16) + 4] = WAIT_DISK;
 		backup;
+		R1 = RELEASE_LOCK;
+		R2 = KERN_LOCK;
+		call MOD_8;
+		restore;
+		backup;
 		call MOD_5;
+		restore;
+		backup;
+		R1 = ACQUIRE_KERN_LOCK;
+		call MOD_8;
 		restore;
 	endwhile;
 	[DISK_STATUS_TABLE] = 1;	//acquire disk
@@ -119,7 +137,16 @@ if(funcNum == ACQUIRE_INODE) then
 		[process_table + 5] = inode_idx;
 		//call scheduler
 		backup;
+		R1 = RELEASE_LOCK;
+		R2 = KERN_LOCK;
+		call MOD_8;
+		restore;
+		backup;
 		call MOD_5;
+		restore;
+		backup;
+		R1 = ACQUIRE_KERN_LOCK;
+		call MOD_8;
 		restore;
 	endwhile;
 	
@@ -171,7 +198,16 @@ if(funcNum == ACQUIRE_BUFFER) then
 		[PROCESS_TABLE + (16 * currPID) + 4] = WAIT_BUFFER;
 		[PROCESS_TABLE + (16 * currPID) + 5] = buffer_num;
 		backup;
+		R1 = RELEASE_LOCK;
+		R2 = KERN_LOCK;
+		call MOD_8;
+		restore;
+		backup;
 		call MOD_5;
+		restore;
+		backup;
+		R1 = ACQUIRE_KERN_LOCK;
+		call MOD_8;
 		restore;
 	endwhile;
 

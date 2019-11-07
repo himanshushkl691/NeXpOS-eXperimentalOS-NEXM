@@ -4,14 +4,24 @@ alias pageNum R2;
 
 //----------Get Free Page(Final Version)----------
 if(funcNum == GET_FREE_PAGE) then
+	label:
 	//increment wait_mem_count
 	[SYSTEM_STATUS_TABLE + 3] = [SYSTEM_STATUS_TABLE + 3] + 1;
 	//wait for memory
 	while ([SYSTEM_STATUS_TABLE + 2] == 0) do
 		[PROCESS_TABLE+([SYSTEM_STATUS_TABLE+(5*CORE)+1]*16)+4]=WAIT_MEM;
+		backup;	
+		R1 = RELEASE_LOCK;
+		R2 = KERN_LOCK;
+		call MOD_8;
+		restore;
 		//call scheduler
 		backup;
 		call MOD_5;
+		restore;
+		backup;
+		R1 = ACQUIRE_KERN_LOCK;
+		call MOD_8;
 		restore;
 	endwhile;
 	//decrement wait_mem_count
@@ -19,18 +29,16 @@ if(funcNum == GET_FREE_PAGE) then
 	//MEM_FREE_COUNT
 	[SYSTEM_STATUS_TABLE + 2] = [SYSTEM_STATUS_TABLE + 2] - 1;
 
-	alias i R3;
+	alias i R0;
 	i = 76;
-	while(i < NUM_MEM_PAGES) do
+	while(i < 128) do
 		if([MEMORY_FREE_LIST + i] == 0) then
 			[MEMORY_FREE_LIST + i] = 1;
-			break;
+			return;
 		endif;
 		i = i + 1;
 	endwhile;
-	//return free page_number
-	R0 = i;
-	return;
+	goto label;
 endif;
 //------------------------------------------------
 
